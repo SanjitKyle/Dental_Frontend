@@ -199,30 +199,30 @@ export const Prescriptions = () => {
   }, [prescriptionsList]);
 
   return (
-    <div className="p-6 md:p-8 max-w-[1600px] mx-auto min-h-screen animate-[fadeIn_0.5s_ease-out]">
+    <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto space-y-4 animate-[fadeIn_0.5s_ease-out]">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 bg-white/60 backdrop-blur-xl p-6 rounded-3xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs">
         <div>
-          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 sm:gap-3 flex-wrap">
             <span>Prescriptions</span>
-            <span className="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-bold border border-blue-200">
+            <span className="text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-100">
               Rx Management
             </span>
           </h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
             Manage electronic dental prescriptions, medication dosages, and printable Rx orders.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
           <button
             onClick={fetchPrescriptions}
             disabled={isLoading}
-            className="p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 font-semibold shadow-xs transition-colors cursor-pointer"
+            className="p-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-semibold shadow-xs transition-colors cursor-pointer"
             title="Refresh List"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-indigo-600' : ''}`} />
           </button>
 
           <button
@@ -230,23 +230,23 @@ export const Prescriptions = () => {
               setSelectedPrescriptionForEdit(null);
               setIsFormModalOpen(true);
             }}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-2xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-blue-500/25 transition-all cursor-pointer"
+            className="flex-1 sm:flex-none px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-xs shadow-indigo-600/20 transition-all cursor-pointer whitespace-nowrap"
           >
-            <Plus className="w-5 h-5" /> New Prescription
+            <Plus className="w-4 h-4" /> New Prescription
           </button>
         </div>
       </div>
 
-      {/* KPI Cards (4 columns) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* KPI Cards (2-cols on mobile, 4-cols on desktop) */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <AppointmentKpi title="Total Prescriptions" value={String(kpiStats.total)} subtext="All time records" icon={FileText} />
-        <AppointmentKpi title="Active Rx" value={String(kpiStats.active)} subtext="Current ongoing treatments" icon={CheckCircle2} />
-        <AppointmentKpi title="Dispensed" value={String(kpiStats.dispensed)} subtext="Fulfilled at pharmacy" icon={Package} />
-        <AppointmentKpi title="Drafts / Pending" value={String(kpiStats.draft)} subtext="Awaiting doctor review" icon={Clock} />
+        <AppointmentKpi title="Active Rx" value={String(kpiStats.active)} subtext="Ongoing treatments" icon={CheckCircle2} />
+        <AppointmentKpi title="Dispensed" value={String(kpiStats.dispensed)} subtext="At pharmacy" icon={Package} />
+        <AppointmentKpi title="Drafts / Pending" value={String(kpiStats.draft)} subtext="Doctor review" icon={Clock} />
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[450px]">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col min-h-[450px]">
         
         {/* Toolbar & Filters */}
         <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row gap-3 items-center justify-between bg-slate-50/40">

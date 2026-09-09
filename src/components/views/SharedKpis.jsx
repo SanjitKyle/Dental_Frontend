@@ -1,42 +1,48 @@
 import React from 'react';
 
-export const PatientKpi = ({ title, value, subtext, icon: Icon, percentage, trendUp }) => (
-  <div className="saas-card p-6 flex flex-col justify-between relative group">
-    <div className="absolute -right-6 -top-6 w-24 h-24 bg-gradient-to-br from-white/0 to-indigo-100/40 rounded-full blur-xl group-hover:bg-indigo-100/60 transition-colors duration-500" />
-    <div className="flex justify-between items-start mb-4 relative z-10">
-      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{title}</p>
-      <div className="p-2.5 rounded-xl bg-slate-50 text-slate-400 group-hover:scale-110 transition-transform duration-300">
-        <Icon className="w-4 h-4" />
+export const PatientKpi = ({ title, value, subtext, icon: Icon, percentage, trendUp }) => {
+  const formattedPercentage = percentage 
+    ? (typeof percentage === 'string' ? percentage.replace(/%+$/, '') : percentage) + '%'
+    : null;
+
+  return (
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-5 flex flex-col justify-between group shadow-xs hover:shadow-md transition-all min-w-0">
+      <div className="flex justify-between items-start mb-2 sm:mb-4 gap-1.5">
+        <p className="text-[9px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">{title}</p>
+        <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-slate-50 text-indigo-600 border border-slate-100 group-hover:scale-105 transition-transform shrink-0">
+          <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
+        </div>
+      </div>
+      
+      <div className="min-w-0">
+        <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight mb-1 truncate">{value}</h3>
+        <div className="flex items-center justify-between gap-1 flex-wrap">
+          <p className="text-[10px] sm:text-xs font-semibold text-slate-500 truncate">{subtext}</p>
+          {formattedPercentage && (
+            <span className={`text-[9px] sm:text-xs font-bold px-1.5 py-0.5 rounded-md shrink-0 ${
+              trendUp ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-600'
+            }`}>
+              {trendUp ? '↑ ' : ''}{formattedPercentage}
+            </span>
+          )}
+        </div>
       </div>
     </div>
-    
-    <div className="relative z-10">
-      <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">{value}</h3>
-      <div className="flex justify-between items-end">
-        <p className="text-xs font-semibold text-slate-500">{subtext}</p>
-        {percentage && (
-          <span className={`text-xs font-bold px-2 py-1 rounded-lg ${trendUp ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
-            {trendUp ? '↑' : ''} {percentage}%
-          </span>
-        )}
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 export const AppointmentKpi = ({ title, value, subtext, icon: Icon }) => (
-  <div className="saas-card p-6 flex flex-col justify-between relative group">
-    <div className="absolute -right-6 -top-6 w-24 h-24 bg-gradient-to-br from-white/0 to-indigo-100/40 rounded-full blur-xl group-hover:bg-indigo-100/60 transition-colors duration-500" />
-    <div className="flex justify-between items-start mb-4 relative z-10">
-      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{title}</p>
-      <div className="p-2.5 rounded-xl bg-slate-50 text-slate-400 group-hover:scale-110 transition-transform duration-300">
-        <Icon className="w-4 h-4" />
+  <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-5 flex flex-col justify-between group shadow-xs hover:shadow-md transition-all min-w-0">
+    <div className="flex justify-between items-start mb-2 sm:mb-4 gap-1.5">
+      <p className="text-[9px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">{title}</p>
+      <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-slate-50 text-indigo-600 border border-slate-100 group-hover:scale-105 transition-transform shrink-0">
+        <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
       </div>
     </div>
     
-    <div className="relative z-10">
-      <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">{value}</h3>
-      <p className="text-xs font-semibold text-slate-500">{subtext}</p>
+    <div className="min-w-0">
+      <h3 className="text-lg sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight mb-0.5 sm:mb-1 truncate">{value}</h3>
+      <p className="text-[10px] sm:text-xs font-semibold text-slate-500 truncate">{subtext}</p>
     </div>
   </div>
 );

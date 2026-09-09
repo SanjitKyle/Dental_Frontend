@@ -190,34 +190,34 @@ export const Odontograms = () => {
   const totalRevenue = odontograms.reduce((acc, curr) => acc + (curr.totalCost || 0), 0);
 
   return (
-    <div className="p-4 md:p-6 max-w-[1600px] mx-auto min-h-screen space-y-4 animate-[fadeIn_0.3s_ease-out]">
+    <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto space-y-4 animate-[fadeIn_0.3s_ease-out]">
       {/* Header Banner */}
-      <div className="bg-white border border-slate-300 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-2xs rounded-xl">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2 flex-wrap">
             Odontograms
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-widest">
+            <span className="text-[10px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-widest">
               Dental Charting
             </span>
           </h2>
-          <p className="text-sm text-slate-500 mt-1 font-medium">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
             Manage interactive dental records, tooth conditions, surfaces, and treatment planning.
           </p>
         </div>
         <button 
           onClick={handleOpenNew}
-          className="px-5 py-2.5 bg-blue-700 hover:bg-blue-800 border border-blue-800 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-2 whitespace-nowrap cursor-pointer rounded-lg"
+          className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 border border-indigo-700 rounded-xl text-white hover:bg-indigo-700 text-xs font-bold uppercase tracking-wider transition-all shadow-xs shadow-indigo-600/20 flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
         >
           <Plus className="w-4 h-4" /> New Odontogram
         </button>
       </div>
 
-      {/* KPI Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Metrics Cards (2-cols on mobile, 4-cols on desktop) */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <AppointmentKpi 
           title="TOTAL PATIENTS" 
           value={totalChartedPatients} 
-          subtext="with dental records" 
+          subtext="dental records" 
           icon={Users} 
         />
         <AppointmentKpi 
@@ -229,31 +229,31 @@ export const Odontograms = () => {
         <AppointmentKpi 
           title="ACTIVE TREATMENTS" 
           value={activeTreatmentsCount} 
-          subtext="procedures in progress" 
+          subtext="in progress" 
           icon={Stethoscope} 
         />
         
-        {/* SaaS Revenue KPI */}
-        <div className="bg-white border border-slate-300 p-5 flex flex-col justify-between shadow-2xs rounded-xl relative group">
-          <div className="flex justify-between items-start mb-3">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">TOTAL REVENUE</p>
-            <div className="p-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
-              <DollarSign className="w-4 h-4" />
+        {/* Revenue KPI Card */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex flex-col justify-between group shadow-xs hover:shadow-md transition-all min-w-0">
+          <div className="flex justify-between items-start mb-3 sm:mb-4 gap-2">
+            <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">TOTAL REVENUE</p>
+            <div className="p-2 sm:p-2.5 rounded-xl bg-slate-50 text-indigo-600 border border-slate-100 group-hover:scale-105 transition-transform shrink-0">
+              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+          <div className="min-w-0">
+            <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight mb-1 truncate">
               ${totalRevenue.toLocaleString()}
             </h3>
-            <p className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full mt-2 inline-block border border-blue-100">
-              Active dental pipeline
+            <p className="text-[10px] sm:text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg inline-block border border-indigo-100 truncate">
+              Active pipeline
             </p>
           </div>
         </div>
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white border border-slate-300 flex flex-col shadow-sm rounded-xl overflow-hidden">
+      <div className="bg-white border border-slate-200/90 rounded-2xl flex flex-col shadow-xs overflow-hidden">
         
         {/* Toolbar & Filter */}
         <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-50/70">

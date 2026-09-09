@@ -3,7 +3,7 @@ import { ContextProvider } from "../context/store";
 import { X, Calendar, Clock, User, Stethoscope } from 'lucide-react';
 import { updateAppointment } from "../services/appointments";
 
-function AppointmentForm() {
+function AppointmentForm({ setClick }) {
     const { Patients, Doctors, setIsEditClick, AppointmentCreate, selectedPatientData, AppointmentUpdate } = useContext(ContextProvider);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -41,7 +41,10 @@ function AppointmentForm() {
         }
     };
 
-    const onClose = () => setIsEditClick(false);
+    const onClose = () => {
+        setIsEditClick(false);
+        setClick(false);
+    }
     useEffect(() => {
         if (selectedPatientData) {
             // Helper to ensure time is HH:mm format
@@ -230,6 +233,7 @@ function AppointmentForm() {
                                         <option value="Scheduled">Scheduled</option>
                                         <option value="Completed">Completed</option>
                                         <option value="Cancelled">Cancelled</option>
+                                        <option value="Follow-up">Follow-up</option>
                                     </select>
                                 </div>
                             </div>

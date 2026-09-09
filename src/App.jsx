@@ -19,11 +19,14 @@ import Register from './components/register';
 import StoreManagement from './context/store';
 import { ContextProvider } from './context/store';
 import FollowUp from './components/views/follow-ip';
+import MobileBottomNav from './components/MobileBottomNav';
 // ============================================================================
 // 1. MAIN APPLICATION LAYOUT
 // Acts as an Outlet for authenticated routes.
 // ============================================================================
 const MainLayout = ({ isPatientModalOpen, closePatientModal, isDoctorModalOpen, closeDoctorModal, onLogout }) => {
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   return (
     <div className="flex flex-col h-screen font-sans overflow-hidden w-full relative bg-slate-50/50 selection:bg-indigo-500/30">
 
@@ -32,17 +35,26 @@ const MainLayout = ({ isPatientModalOpen, closePatientModal, isDoctorModalOpen, 
       <div className="absolute top-0 w-full h-[500px] bg-gradient-to-b from-indigo-50/50 to-transparent -z-10" />
 
       {/* Top Navigation Header */}
-      <Header onLogout={onLogout} />
+      <Header 
+        onLogout={onLogout} 
+        onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)} 
+      />
 
       {/* Main Body (Sidebar + Content Area) */}
-      <div className="flex flex-1 overflow-hidden w-full">
-        <Sidebar />
+      <div className="flex flex-1 overflow-hidden w-full relative">
+        <Sidebar 
+          isMobileOpen={isMobileSidebarOpen} 
+          onCloseMobile={() => setIsMobileSidebarOpen(false)} 
+        />
 
-        <main className="flex-1 overflow-y-auto w-full relative">
+        <main className="flex-1 overflow-y-auto w-full relative pb-20 md:pb-6">
           {/* Outlet renders the matched child route component */}
           <Outlet />
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav />
 
       {/* Reusable Modals */}
       <PatientFormModal isOpen={isPatientModalOpen} onClose={closePatientModal} />

@@ -2,16 +2,20 @@ import React, { useState } from 'react';
 import { Menu, Eye, Bell, Moon, Maximize, ChevronDown } from 'lucide-react';
 import PopupModel from './logoutpop';
 
-const Header = ({ onLogout }) => {
+const Header = ({ onLogout, onToggleMobileSidebar }) => {
   const [isOpen, setOpen] = useState(false);
   function handleOpen(e) {
     setOpen(!isOpen)
   }
 
   return (
-    <header className="h-14 glass-header relative flex items-center justify-between px-6 sticky top-0 z-20 w-full">
+    <header className="h-14 glass-header relative flex items-center justify-between px-4 sm:px-6 sticky top-0 z-30 w-full bg-white/90 backdrop-blur-md border-b border-slate-200/80">
       <div className="flex items-center">
-        <button className="text-slate-500 hover:text-blue-700 transition-colors md:hidden mr-4">
+        <button 
+          onClick={onToggleMobileSidebar}
+          className="p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all md:hidden mr-2 cursor-pointer"
+          title="Open Menu"
+        >
           <Menu className="w-5 h-5" />
         </button>
 

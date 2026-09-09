@@ -1,6 +1,6 @@
 import React, { useContext, useState, useMemo } from 'react';
-import { 
-  Search, ChevronDown, Clock, CheckCircle2, CalendarDays, Plus, 
+import {
+  Search, ChevronDown, Clock, CheckCircle2, CalendarDays, Plus,
   User, Stethoscope, Phone, MessageSquare, Edit2, Trash2, X, Send,
   AlertCircle, Filter, Calendar, Activity, Check, ArrowRight
 } from 'lucide-react';
@@ -9,16 +9,17 @@ import AppointmentForm from '../AppointmentForm';
 import { AppointmentKpi } from './SharedKpis';
 
 export default function FollowUp() {
-  const { 
-    Appointments: AppointmentsData, 
-    Patients, 
-    Doctors, 
-    setIsEditClick, 
-    isEditClick, 
-    setSelectedPatientData, 
-    selectedPatientData, 
-    AppointmentDelete 
+  const {
+    Appointments: AppointmentsData,
+    Patients,
+    Doctors,
+    setIsEditClick,
+    isEditClick,
+    setSelectedPatientData,
+    selectedPatientData,
+    AppointmentDelete
   } = useContext(ContextProvider);
+  const [click, setClick] = useState(false)
 
   // Safe normalized arrays from Context
   const appointmentsList = useMemo(() => {
@@ -43,8 +44,8 @@ export default function FollowUp() {
   const followUpAppointments = useMemo(() => {
     return appointmentsList.filter((apt) => {
       const vType = (apt.visit_type || '').toLowerCase().trim();
-      const sType = (apt.service || '').toLowerCase().trim();
-      return vType === 'follow-up' || vType === 'followup' || sType.includes('follow-up') || sType.includes('follow up');
+      const sType = (apt.status || '').toLowerCase().trim();
+      return sType === 'follow-up' || sType === 'followup' || sType.includes('follow-up') || sType.includes('follow up');
     });
   }, [appointmentsList]);
 
@@ -87,6 +88,7 @@ export default function FollowUp() {
   const completed = followUpAppointments.filter(a => a.status === 'Completed').length;
   const scheduled = followUpAppointments.filter(a => a.status === 'Scheduled' || a.status === 'Pending').length;
   const cancelled = followUpAppointments.filter(a => a.status === 'Cancelled').length;
+  const followUp = followUpAppointments.filter(a => a.status === 'Follow-up').length;
 
   // Filtered List based on Search and Dropdowns
   const filteredList = useMemo(() => {
@@ -137,70 +139,72 @@ export default function FollowUp() {
     setIsWhatsAppModalOpen(false);
   };
 
+  function handleEdit(apt) {
+    console.log('Editing appointment :', apt);
+    setSelectedPatientData(apt);
+    setIsEditClick(true);
+  }
   // Open Book Follow-up Form
   const handleBookFollowUp = () => {
-    setSelectedPatientData({
-      visit_type: 'Follow-up',
-      status: 'Scheduled',
-      date: new Date().toISOString().split('T')[0]
-    });
-    setIsEditClick(true);
+    setSelectedPatientData(null);
+    setIsEditClick(false);
+    setClick(true);
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-[1600px] mx-auto min-h-screen animate-[fadeIn_0.5s_ease-out]">
-      
+    <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto space-y-4">
+
       {/* 1. Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white/70 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200">
-              <CalendarDays className="w-5 h-5" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 shrink-0">
+              <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Follow-Up Appointments</h2>
-              <p className="text-sm text-slate-500 font-medium">Tracking all patient appointments with visit type: <span className="font-bold text-indigo-600">Follow-up</span></p>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Follow-Up Appointments</h2>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">Tracking all patient appointments with visit type: <span className="font-bold text-indigo-600">Follow-up</span></p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               onClick={() => setViewMode('table')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
             >
               Table
             </button>
             <button
               onClick={() => setViewMode('cards')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${viewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'cards' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
             >
               Cards
             </button>
           </div>
 
-          <button 
+          <button
             onClick={handleBookFollowUp}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-indigo-200 transition-all cursor-pointer"
+            className="flex-1 sm:flex-none px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-xs shadow-indigo-600/20 transition-all cursor-pointer whitespace-nowrap"
           >
             <Plus className="w-4 h-4" /> Book Follow-Up
           </button>
         </div>
       </div>
 
-      {/* 2. KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* 2. KPI Cards (2-cols on mobile, 4-cols on desktop) */}
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <AppointmentKpi title="Total Follow-Ups" value={total.toString()} subtext="All follow-up visits" icon={CalendarDays} />
         <AppointmentKpi title="Scheduled" value={scheduled.toString()} subtext="Pending & Scheduled" icon={Clock} />
         <AppointmentKpi title="Completed" value={completed.toString()} subtext="Attended visits" icon={CheckCircle2} />
-        <AppointmentKpi title="Cancelled" value={cancelled.toString()} subtext="Cancelled appointments" icon={AlertCircle} />
+        <AppointmentKpi title="Cancelled" value={cancelled.toString()} subtext="Cancelled visits" icon={AlertCircle} />
       </div>
 
       {/* 3. Main Data Card */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col min-h-[400px]">
-        
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col min-h-[400px]">
+
         {/* Toolbar */}
         <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-50/50">
           <div className="relative flex-1 max-w-md w-full">
@@ -227,9 +231,9 @@ export default function FollowUp() {
               className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 cursor-pointer"
             >
               <option value="ALL">All Statuses ({total})</option>
-              <option value="Scheduled">Scheduled ({scheduled})</option>
-              <option value="Completed">Completed ({completed})</option>
+              {/* <option value="Scheduled">Scheduled ({scheduled})</option> */}
               <option value="Cancelled">Cancelled ({cancelled})</option>
+              <option value="Follow-up">Follow-Up ({followUp})</option>
             </select>
 
             {/* Doctor Filter */}
@@ -260,7 +264,7 @@ export default function FollowUp() {
                 ? 'No follow-up appointments match your active filters.'
                 : 'There are currently no appointments with visit type "Follow-up".'}
             </p>
-            <button 
+            <button
               onClick={handleBookFollowUp}
               className="mt-6 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-200 transition-colors cursor-pointer"
             >
@@ -270,20 +274,20 @@ export default function FollowUp() {
         ) : viewMode === 'table' ? (
           /* TABLE VIEW */
           <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left border-collapse min-w-[900px]">
+            <table className="w-full text-left border-collapse min-w-[1050px]">
               <thead>
-                <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50/50">
-                  <th className="py-4 px-6">Patient</th>
-                  <th className="py-4 px-3">Date</th>
-                  <th className="py-4 px-3">Time</th>
-                  <th className="py-4 px-3">Doctor</th>
-                  <th className="py-4 px-3">Visit Type / Service</th>
-                  <th className="py-4 px-3">Reason</th>
-                  <th className="py-4 px-3">Status</th>
-                  <th className="py-4 px-6 text-right">Actions</th>
+                <tr className="border-b border-slate-100 text-[11px] font-black text-slate-400 uppercase tracking-wider bg-slate-50/80">
+                  <th className="py-4 px-6 min-w-[220px]">Patient</th>
+                  <th className="py-4 px-4 whitespace-nowrap min-w-[140px]">Date</th>
+                  <th className="py-4 px-4 whitespace-nowrap min-w-[130px]">Time</th>
+                  <th className="py-4 px-4 whitespace-nowrap min-w-[180px]">Doctor</th>
+                  <th className="py-4 px-4 whitespace-nowrap min-w-[150px]">Visit Type / Service</th>
+                  <th className="py-4 px-4 min-w-[220px]">Reason</th>
+                  <th className="py-4 px-4 whitespace-nowrap min-w-[140px]">Status</th>
+                  <th className="py-4 px-6 text-right whitespace-nowrap min-w-[140px]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+              <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
                 {filteredList.map((apt) => {
                   const patientObj = getPatientObj(apt.patient);
                   const patientName = getPatientName(apt.patient);
@@ -291,55 +295,62 @@ export default function FollowUp() {
                   const phone = patientObj?.phone || patientObj?.contact_number || patientObj?.mobile || '—';
 
                   return (
-                    <tr key={apt._id || Math.random()} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-4 px-6">
+                    <tr key={apt._id || Math.random()} className="hover:bg-slate-50/70 transition-colors">
+                      {/* Patient */}
+                      <td className="py-4 px-6 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-xs shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-xs shrink-0 shadow-2xs">
                             {patientName.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-bold text-slate-900 text-sm">{patientName}</div>
-                            <div className="text-slate-400 text-xs">{phone}</div>
+                            <div className="font-extrabold text-slate-900 text-sm">{patientName}</div>
+                            <div className="text-slate-400 text-xs font-medium">{phone}</div>
                           </div>
                         </div>
                       </td>
 
-                      <td className="py-4 px-3 text-sm font-semibold text-slate-700 whitespace-nowrap">
+                      {/* Date */}
+                      <td className="py-4 px-4 whitespace-nowrap font-bold text-slate-800">
                         {apt.date ? new Date(apt.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
                       </td>
 
-                      <td className="py-4 px-3 text-xs font-semibold text-slate-600 whitespace-nowrap">
+                      {/* Time */}
+                      <td className="py-4 px-4 whitespace-nowrap font-semibold text-slate-600">
                         {apt.start_time || apt.starttime || 'N/A'} {apt.end_time ? `- ${apt.end_time}` : ''}
                       </td>
 
-                      <td className="py-4 px-3 font-bold text-slate-800">
+                      {/* Doctor (guaranteed single line) */}
+                      <td className="py-4 px-4 whitespace-nowrap font-extrabold text-slate-900">
                         Dr. {doctorName}
                       </td>
 
-                      <td className="py-4 px-3">
-                        <div className="flex flex-col gap-1">
-                          <span className="inline-block text-xs font-extrabold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100 w-fit">
+                      {/* Visit Type / Service */}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="inline-block text-xs font-extrabold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100/80 whitespace-nowrap">
                             {apt.visit_type || 'Follow-up'}
                           </span>
                           {apt.service && (
-                            <span className="text-[11px] text-slate-500 font-medium">
-                              {apt.service}
+                            <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
+                              ({apt.service})
                             </span>
                           )}
                         </div>
                       </td>
 
-                      <td className="py-4 px-3 max-w-[200px] truncate text-xs text-slate-500 font-medium" title={apt.reasonForVisit}>
-                        {apt.reasonForVisit || '—'}
+                      {/* Reason */}
+                      <td className="py-4 px-4 max-w-[260px] truncate text-slate-600 font-medium" title={apt.reasonForVisit}>
+                        {apt.reasonForVisit || 'Follow-up consultation'}
                       </td>
 
-                      <td className="py-4 px-3">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 ${
-                          apt.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
-                          apt.status === 'Cancelled' ? 'bg-rose-100 text-rose-700' :
-                          'bg-amber-100 text-amber-700'
+                      {/* Status (guaranteed single line badge) */}
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className={`whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold border ${
+                          apt.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                          apt.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                          'bg-amber-50 text-amber-800 border-amber-200'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                             apt.status === 'Completed' ? 'bg-emerald-600' :
                             apt.status === 'Cancelled' ? 'bg-rose-600' :
                             'bg-amber-600'
@@ -348,37 +359,35 @@ export default function FollowUp() {
                         </span>
                       </td>
 
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                      {/* Actions */}
+                      <td className="py-4 px-6 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-2">
                           {/* WhatsApp Reminder */}
-                          <button 
+                          <button
                             onClick={() => handleOpenWhatsApp(apt)}
-                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer" 
+                            className="p-2 text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded-xl transition-all cursor-pointer border border-emerald-200 shadow-2xs"
                             title="Send WhatsApp Reminder"
                           >
                             <MessageSquare className="w-4 h-4" />
                           </button>
 
                           {/* Edit */}
-                          <button 
-                            onClick={() => {
-                              setSelectedPatientData(apt);
-                              setIsEditClick(true);
-                            }}
-                            className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                          <button
+                            onClick={() => handleEdit(apt)}
+                            className="p-2 text-indigo-700 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-xl transition-all cursor-pointer border border-indigo-200 shadow-2xs"
                             title="Edit Appointment"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
 
                           {/* Delete */}
-                          <button 
+                          <button
                             onClick={() => {
                               if (window.confirm(`Are you sure you want to delete this follow-up appointment for ${patientName}?`)) {
                                 AppointmentDelete(apt._id);
                               }
                             }}
-                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-xl transition-all cursor-pointer border border-rose-200 shadow-2xs"
                             title="Delete Appointment"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -408,11 +417,10 @@ export default function FollowUp() {
                       <span className="text-[11px] font-black uppercase text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">
                         Follow-Up Visit
                       </span>
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                        apt.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${apt.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
                         apt.status === 'Cancelled' ? 'bg-rose-100 text-rose-700' :
-                        'bg-amber-100 text-amber-700'
-                      }`}>
+                          'bg-amber-100 text-amber-700'
+                        }`}>
                         {apt.status || 'Scheduled'}
                       </span>
                     </div>
@@ -495,7 +503,7 @@ export default function FollowUp() {
 
       {/* Appointment Edit/Create Modal */}
       {isEditClick && <AppointmentForm />}
-
+      {click && <AppointmentForm isFollowUp={true} setClick={setClick} />}
       {/* WhatsApp Message Reminder Modal */}
       {isWhatsAppModalOpen && whatsAppRecipient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
