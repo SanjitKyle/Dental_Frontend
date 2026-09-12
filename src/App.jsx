@@ -19,6 +19,8 @@ import Register from './components/register';
 import StoreManagement from './context/store';
 import { ContextProvider } from './context/store';
 import FollowUp from './components/views/follow-ip';
+import { Staff } from './components/views/Staff';
+import { Enquiries } from './components/views/Enquiries';
 import MobileBottomNav from './components/MobileBottomNav';
 // ============================================================================
 // 1. MAIN APPLICATION LAYOUT
@@ -135,10 +137,11 @@ const [isAuthenticated, setIsAuthenticated] = useState(() => {
               <Route path="/test-reports" element={<EmptyView title="Test Reports" />} />
               <Route path="/billing" element={<EmptyView title="Billing" />} />
               <Route path="/inventory" element={<EmptyView title="Inventory" />} />
-              <Route path="/staff" element={<EmptyView title="Staff" />} />
+              <Route path="/staff" element={<Staff />} />
               <Route path="/settings" element={<EmptyView title="Settings" />} />
               <Route path="/website" element={<EmptyView title="Website Management" />} />
               <Route path="/follow-up" element={<FollowUp />} />
+              <Route path="/enquiries" element={<Enquiries />} />
             </Route>
           </Route>
         </Routes>

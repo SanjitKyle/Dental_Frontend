@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { CreatePatient, getPatients, EditPatients, DeletePatient } from "../services/patients";
 import { AddDoctor, getDoctors } from "../services/doctor";
 import { createAppointment, getAppointments, updateAppointment, deleteAppointment } from "../services/appointments";
+import { getPrescriptions } from "../services/prescriptions";
 import { axiosInstance } from "../services/axiosInstance";
 export const ContextProvider = createContext();
 
@@ -15,9 +16,13 @@ function StoreManagement({ children }) {
     const [Patients, setPatients] = useState([]);
     const [Doctors, setDoctors] = useState([]);
     const [Appointments, setAppointments] = useState([]);
+    const [Prescriptions, setPrescriptions] = useState([]);
+    const [dashboardLoading, setDashboardLoading] = useState(true);
+    const [loading, setLoading] = useState({ patients: true, doctors: true, appointments: true, prescriptions: true });
     const [isEditClick, setIsEditClick] = useState(false);
     const [selectedPatientData, setSelectedPatientData] = useState(null);
     async function getAllPatience() {
+        setLoading((current) => ({ ...current, patients: true }));
         try {
 
             const res = await getPatients(token);
@@ -27,12 +32,15 @@ function StoreManagement({ children }) {
 
         } catch (error) {
             throw error;
+        } finally {
+            setLoading((current) => ({ ...current, patients: false }));
         }
 
 
     }
 
     async function getAllDoctor() {
+        setLoading((current) => ({ ...current, doctors: true }));
         try {
             const getalldoctor = await getDoctors(token);
             console.log('getting all doctor', getalldoctor);
@@ -40,16 +48,35 @@ function StoreManagement({ children }) {
 
         } catch (error) {
             console.log('error', error)
+        } finally {
+            setLoading((current) => ({ ...current, doctors: false }));
         }
     }
 
     async function getAllAppointments() {
+        setLoading((current) => ({ ...current, appointments: true }));
         try {
             const res = await getAppointments(token);
             console.log('getting all appointments', res);
             setAppointments(res.data || res); // Adapt based on actual API response structure
         } catch (error) {
             console.log('error getting appointments', error);
+        } finally {
+            setLoading((current) => ({ ...current, appointments: false }));
+        }
+    }
+
+    async function getAllPrescriptions() {
+        setLoading((current) => ({ ...current, prescriptions: true }));
+        try {
+            const res = await getPrescriptions(token);
+            const prescriptions = res?.data || res?.prescriptions || res || [];
+            setPrescriptions(Array.isArray(prescriptions) ? prescriptions : []);
+        } catch (error) {
+            console.log('error getting prescriptions', error);
+            setPrescriptions([]);
+        } finally {
+            setLoading((current) => ({ ...current, prescriptions: false }));
         }
     }
 
@@ -154,11 +181,19 @@ function StoreManagement({ children }) {
     }
 
     useEffect(() => {
-        getAllPatience();
-        getAllDoctor();
-        getAllAppointments();
+        if (!token) {
+            setDashboardLoading(false);
+            return;
+        }
 
-    }, [])
+        setDashboardLoading(true);
+        Promise.allSettled([
+            getAllPatience(),
+            getAllDoctor(),
+            getAllAppointments(),
+            getAllPrescriptions()
+        ]).finally(() => setDashboardLoading(false));
+    }, [token])
     useEffect(() => {
         console.log('res to get patients', Patients)
     }, [Patients])
@@ -169,6 +204,7 @@ function StoreManagement({ children }) {
             Patients, PatientCreate, PatientEdit, PatientDelete,
             CreateDoctor, Doctors, DoctorEdit, DoctorDelete,
             Appointments, AppointmentCreate, getAllAppointments,
+            Prescriptions, getAllPrescriptions, dashboardLoading, loading,
             setIsEditClick, isEditClick, AppointmentUpdate, AppointmentDelete,setIsAuthenticated,isAuthenticated
         }}>
             {children}

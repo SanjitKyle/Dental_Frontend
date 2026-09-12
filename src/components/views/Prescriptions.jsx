@@ -202,7 +202,7 @@ export const Prescriptions = () => {
     <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto space-y-4 animate-[fadeIn_0.5s_ease-out]">
       
       {/* Header */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs">
+      <div className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-blue-600">
         <div>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 sm:gap-3 flex-wrap">
             <span>Prescriptions</span>
@@ -246,10 +246,10 @@ export const Prescriptions = () => {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col min-h-[450px]">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col min-h-[450px] ring-1 ring-slate-100/70">
         
         {/* Toolbar & Filters */}
-        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row gap-3 items-center justify-between bg-slate-50/40">
+        <div className="p-4 border-b border-slate-200/80 flex flex-col md:flex-row gap-3 items-center justify-between bg-slate-50/80">
           
           {/* Search Box */}
           <div className="relative flex-1 max-w-md w-full">

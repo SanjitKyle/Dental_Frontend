@@ -6,10 +6,10 @@ export const PatientKpi = ({ title, value, subtext, icon: Icon, percentage, tren
     : null;
 
   return (
-    <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-5 flex flex-col justify-between group shadow-xs hover:shadow-md transition-all min-w-0">
+    <div className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-5 flex flex-col justify-between group shadow-xs hover:border-indigo-200 hover:shadow-md transition-all min-w-0 before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-indigo-500 before:scale-x-0 before:origin-left group-hover:before:scale-x-100 before:transition-transform">
       <div className="flex justify-between items-start mb-2 sm:mb-4 gap-1.5">
         <p className="text-[9px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">{title}</p>
-        <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-slate-50 text-indigo-600 border border-slate-100 group-hover:scale-105 transition-transform shrink-0">
+        <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-indigo-50/70 text-indigo-600 border border-indigo-100 group-hover:scale-105 group-hover:bg-indigo-100 transition-transform shrink-0">
           <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
         </div>
       </div>
@@ -32,10 +32,10 @@ export const PatientKpi = ({ title, value, subtext, icon: Icon, percentage, tren
 };
 
 export const AppointmentKpi = ({ title, value, subtext, icon: Icon }) => (
-  <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-5 flex flex-col justify-between group shadow-xs hover:shadow-md transition-all min-w-0">
+    <div className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-5 flex flex-col justify-between group shadow-xs hover:border-teal-200 hover:shadow-md transition-all min-w-0 before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-teal-500 before:scale-x-0 before:origin-left group-hover:before:scale-x-100 before:transition-transform">
     <div className="flex justify-between items-start mb-2 sm:mb-4 gap-1.5">
       <p className="text-[9px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">{title}</p>
-      <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-slate-50 text-indigo-600 border border-slate-100 group-hover:scale-105 transition-transform shrink-0">
+        <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-teal-50 text-teal-700 border border-teal-100 group-hover:scale-105 group-hover:bg-teal-100 transition-transform shrink-0">
         <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
       </div>
     </div>

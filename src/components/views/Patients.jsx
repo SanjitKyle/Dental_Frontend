@@ -3,10 +3,24 @@ import { Search, ChevronDown, ChevronLeft, ChevronRight, Edit, Trash2, Users, Us
 import { PatientKpi } from './SharedKpis';
 import { ContextProvider } from '../../context/store';
 import PatientFormModal from '../PatientFormModal';
+import { DataPageSkeleton } from '../DataPageSkeleton';
 
 export const Patients = ({ onAddPatient }) => {
-  const { Patients, setIsEditClick, isEditClick, setSelectedPatientData, PatientDelete } = useContext(ContextProvider);
+  const { Patients, setIsEditClick, isEditClick, setSelectedPatientData, PatientDelete, loading } = useContext(ContextProvider);
   const [searchValue, setSearchValue] = useState("");
+  if (loading?.patients) return <DataPageSkeleton />;
+  const patientsList = Array.isArray(Patients?.data) ? Patients.data : Array.isArray(Patients) ? Patients : [];
+  const patientAges = patientsList.map((patient) => {
+    if (!patient?.date_of_birth) return null;
+    const birthDate = new Date(patient.date_of_birth);
+    if (Number.isNaN(birthDate.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const birthdayHasPassed = today.getMonth() > birthDate.getMonth() || (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
+    if (!birthdayHasPassed) age -= 1;
+    return age >= 0 ? age : null;
+  }).filter((age) => age !== null);
+  const averageAge = patientAges.length ? Math.round(patientAges.reduce((total, age) => total + age, 0) / patientAges.length) : '—';
   
   const filteredPatients = Array.isArray(Patients) ? Patients.filter((p) => {
     if (!searchValue) return true;
@@ -21,7 +35,7 @@ export const Patients = ({ onAddPatient }) => {
   return (
     <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto space-y-4">
       {/* Header */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs">
+      <div className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-indigo-600">
         <div>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Patients</h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">Manage patient records and clinical history.</p>
@@ -39,13 +53,13 @@ export const Patients = ({ onAddPatient }) => {
         <PatientKpi title="Total Patients" value={Patients?.length || 0} subtext="vs last month" icon={Users} percentage="100" trendUp={true} />
         <PatientKpi title="New This Month" value="1" subtext="vs 0 last month" icon={UserPlus} percentage="100" trendUp={true} />
         <PatientKpi title="Active Patients" value="1" subtext="Recently active" icon={Activity} />
-        <PatientKpi title="Avg Age" value="0" subtext="Years old" icon={Clock} />
+        <PatientKpi title="Avg Age" value={averageAge} subtext={patientAges.length ? "Years old" : "Birth dates unavailable"} icon={Clock} />
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl flex flex-col shadow-xs overflow-hidden">
+      <div className="bg-white border border-slate-200/90 rounded-2xl flex flex-col shadow-xs overflow-hidden ring-1 ring-slate-100/70">
         {/* Toolbar */}
-        <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-col md:flex-row gap-3 sm:gap-4 items-center justify-between bg-slate-50/50">
+        <div className="p-3 sm:p-4 border-b border-slate-200/80 flex flex-col md:flex-row gap-3 sm:gap-4 items-center justify-between bg-slate-50/80">
           <div className="relative flex-1 max-w-md w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input

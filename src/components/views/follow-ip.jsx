@@ -7,6 +7,7 @@ import {
 import { ContextProvider } from '../../context/store';
 import AppointmentForm from '../AppointmentForm';
 import { AppointmentKpi } from './SharedKpis';
+import { DataPageSkeleton } from '../DataPageSkeleton';
 
 export default function FollowUp() {
   const {
@@ -17,7 +18,8 @@ export default function FollowUp() {
     isEditClick,
     setSelectedPatientData,
     selectedPatientData,
-    AppointmentDelete
+    AppointmentDelete,
+    loading
   } = useContext(ContextProvider);
   const [click, setClick] = useState(false)
 
@@ -151,11 +153,13 @@ export default function FollowUp() {
     setClick(true);
   };
 
+  if (loading?.appointments || loading?.patients || loading?.doctors) return <DataPageSkeleton kpis={3} />;
+
   return (
     <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto space-y-4">
 
       {/* 1. Header */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs">
+      <div className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-indigo-600">
         <div>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 shrink-0">
@@ -203,10 +207,10 @@ export default function FollowUp() {
       </div>
 
       {/* 3. Main Data Card */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col min-h-[400px]">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col ring-1 ring-slate-100/70">
 
         {/* Toolbar */}
-        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-50/50">
+        <div className="p-4 border-b border-slate-200/80 flex flex-col md:flex-row gap-4 items-center justify-between bg-slate-50/80">
           <div className="relative flex-1 max-w-md w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input

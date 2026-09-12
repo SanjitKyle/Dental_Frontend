@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
-  LayoutDashboard, Users, CalendarDays, Stethoscope, Receipt, 
-  Package, UsersRound, Settings, Globe, Pill, Activity, X 
+  LayoutDashboard, Users, CalendarDays, Stethoscope, MessageSquare,
+  UsersRound, Settings, Globe, Pill, Activity, X 
 } from 'lucide-react';
 
 const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
@@ -14,11 +14,10 @@ const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
     { id: 'odontograms', label: 'Odontograms', icon: Activity, path: '/odontograms' },
     { id: 'prescriptions', label: 'Prescriptions', icon: Pill, path: '/prescriptions' },
     { id: 'follow up', label: 'Follow Up', icon: CalendarDays, path: '/follow-up' },
+    { id: 'enquiries', label: 'Enquiries', icon: MessageSquare, path: '/enquiries' },
   ];
 
   const managementItems = [
-    { id: 'billing', label: 'Billing', icon: Receipt, path: '/billing' },
-    { id: 'inventory', label: 'Inventory', icon: Package, path: '/inventory' },
     { id: 'staff', label: 'Staff', icon: UsersRound, path: '/staff' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
     { id: 'website', label: 'Website', icon: Globe, path: '/website' },

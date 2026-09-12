@@ -1,11 +1,17 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Search, ChevronDown, Clock, CheckCircle2 } from 'lucide-react';
 import { AppointmentKpi } from './SharedKpis';
 import { ContextProvider } from '../../context/store';
 import AppointmentForm from '../AppointmentForm';
+import { DataPageSkeleton } from '../DataPageSkeleton';
 
 export const Appointments = () => {
-  const { setIsEditClick, isEditClick, Appointments: AppointmentsData, Patients, Doctors, setSelectedPatientData, selectedPatientData, AppointmentDelete } = useContext(ContextProvider)
+  const { setIsEditClick, isEditClick, Appointments: AppointmentsData, Patients, Doctors, setSelectedPatientData, selectedPatientData, AppointmentDelete, loading } = useContext(ContextProvider)
+  const [searchValue, setSearchValue] = useState('');
+  const [doctorFilter, setDoctorFilter] = useState('ALL');
+  const [dateFilter, setDateFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  if (loading?.appointments) return <DataPageSkeleton kpis={3} />;
 
   // Safely extract arrays from context (handling both direct arrays or { data: [...] } objects)
   const allAppointments = Array.isArray(AppointmentsData?.data) ? AppointmentsData.data : Array.isArray(AppointmentsData) ? AppointmentsData : [];
@@ -38,11 +44,33 @@ export const Appointments = () => {
     return d ? d.full_name : doctorId || 'Unknown Doctor';
   };
 
+  const doctorOptions = [...new Map(doctorsList.map((doctor) => [String(doctor._id || doctor.id), doctor])).values()];
+  const appointmentStatuses = [...new Set(appointmentsList.map((appointment) => appointment.status || 'Scheduled'))].sort();
+  const filteredAppointments = appointmentsList.filter((appointment) => {
+    const patientName = getPatientName(appointment.patient).toLowerCase();
+    const doctorName = getDoctorName(appointment.doctor).toLowerCase();
+    const service = String(appointment.service || appointment.visit_type || '').toLowerCase();
+    const search = searchValue.toLowerCase().trim();
+    const doctorId = typeof appointment.doctor === 'object' ? appointment.doctor?._id || appointment.doctor?.id : appointment.doctor;
+    const appointmentDate = appointment.date ? new Date(appointment.date) : null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const matchesDate = dateFilter === 'ALL' || (appointmentDate && (
+      (dateFilter === 'TODAY' && appointmentDate.toDateString() === today.toDateString()) ||
+      (dateFilter === 'UPCOMING' && appointmentDate >= today) ||
+      (dateFilter === 'PAST' && appointmentDate < today)
+    ));
+    return (!search || patientName.includes(search) || doctorName.includes(search) || service.includes(search)) &&
+      (doctorFilter === 'ALL' || String(doctorId) === doctorFilter) &&
+      matchesDate &&
+      (statusFilter === 'ALL' || String(appointment.status || 'Scheduled') === statusFilter);
+  });
+
   return (
     <>
       <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto space-y-4">
         {/* Header */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs">
+        <div className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-amber-500">
           <div>
             <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Appointments</h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">Manage patient appointments and overall scheduling.</p>
@@ -63,34 +91,30 @@ export const Appointments = () => {
         </div>
 
         {/* Main Table Card */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col min-h-[400px]">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex flex-col min-h-[400px] ring-1 ring-slate-100/70">
           {/* Toolbar */}
-          <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-col md:flex-row gap-3 sm:gap-4 items-center justify-between bg-slate-50/50">
+          <div className="p-3 sm:p-4 border-b border-slate-200/80 flex flex-col md:flex-row gap-3 sm:gap-4 items-center justify-between bg-slate-50/80">
             <div className="relative flex-1 max-w-md w-full">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search patient or doctor..."
+                value={searchValue}
+                onChange={(event) => setSearchValue(event.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs"
               />
             </div>
             <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
-              <button className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 uppercase tracking-wider transition-colors shadow-xs whitespace-nowrap">
-                All doctors <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-              </button>
-              <button className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 uppercase tracking-wider transition-colors shadow-xs whitespace-nowrap">
-                All dates <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-              </button>
-              <button className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 uppercase tracking-wider transition-colors shadow-xs whitespace-nowrap">
-                All statuses <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-              </button>
+              <select value={doctorFilter} onChange={(event) => setDoctorFilter(event.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 uppercase tracking-wider shadow-xs whitespace-nowrap outline-none focus:ring-2 focus:ring-indigo-500/20"><option value="ALL">All Doctors</option>{doctorOptions.map((doctor) => <option key={doctor._id || doctor.id} value={doctor._id || doctor.id}>{doctor.full_name || doctor.name}</option>)}</select>
+              <select value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 uppercase tracking-wider shadow-xs whitespace-nowrap outline-none focus:ring-2 focus:ring-indigo-500/20"><option value="ALL">All Dates</option><option value="TODAY">Today</option><option value="UPCOMING">Upcoming</option><option value="PAST">Past</option></select>
+              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 uppercase tracking-wider shadow-xs whitespace-nowrap outline-none focus:ring-2 focus:ring-indigo-500/20"><option value="ALL">All Statuses</option>{appointmentStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>
             </div>
           </div>
 
           {/* 1. Mobile Card List (Visible only on mobile screens < 768px) */}
           <div className="md:hidden divide-y divide-slate-100">
-            {appointmentsList.length > 0 ? (
-              appointmentsList.map((apt) => (
+            {filteredAppointments.length > 0 ? (
+              filteredAppointments.map((apt) => (
                 <div key={apt._id || Math.random()} className="p-4 space-y-3 bg-white hover:bg-slate-50/50 transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -172,8 +196,8 @@ export const Appointments = () => {
                 </tr>
               </thead>
               <tbody>
-                {appointmentsList.length > 0 ? (
-                  appointmentsList.map((apt) => (
+                {filteredAppointments.length > 0 ? (
+                  filteredAppointments.map((apt) => (
                     <tr key={apt._id || Math.random()} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                       <td className="py-4 px-6"><input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/20" /></td>
                       <td className="py-4 px-2 font-bold text-slate-800">{getPatientName(apt.patient)}</td>

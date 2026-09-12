@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Form, X } from 'lucide-react';
+import { UserRoundPlus, X } from 'lucide-react';
 import { CreatePatient } from '../services/patients';
 import { ContextProvider } from '../context/store';
 
@@ -95,24 +95,24 @@ const PatientFormModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[92vh] border border-white/80">
 
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-          <h2 className="text-lg font-bold text-slate-800">Add New Patient</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+        <div className="px-5 sm:px-7 py-4 border-b border-slate-200 flex justify-between items-center bg-white">
+          <div className="flex items-center gap-3"><div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center justify-center"><UserRoundPlus className="w-4 h-4" /></div><div><h2 className="text-lg font-black text-slate-900">{selectedPatientData ? 'Edit Patient' : 'Add New Patient'}</h2><p className="text-[11px] font-medium text-slate-500">Patient record and care details</p></div></div>
+          <button onClick={onClose} aria-label="Close patient form" className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <div className="p-6 overflow-y-auto">
-          <form id="patient-form" onSubmit={handleSubmit} className="space-y-6">
+        <div className="px-5 sm:px-7 py-6 overflow-y-auto bg-slate-50/40">
+          <form id="patient-form" onSubmit={handleSubmit} className="space-y-7 [&_input]:rounded-xl [&_input]:border-slate-200 [&_input]:px-3.5 [&_input]:py-2.5 [&_input]:text-sm [&_input]:shadow-xs [&_input]:focus:ring-2 [&_input]:focus:ring-indigo-500/20 [&_input]:focus:border-indigo-500 [&_select]:rounded-xl [&_select]:border-slate-200 [&_select]:px-3.5 [&_select]:py-2.5 [&_select]:text-sm [&_select]:shadow-xs [&_select]:focus:ring-2 [&_select]:focus:ring-indigo-500/20 [&_select]:focus:border-indigo-500 [&_textarea]:rounded-xl [&_textarea]:border-slate-200 [&_textarea]:px-3.5 [&_textarea]:py-2.5 [&_textarea]:text-sm [&_textarea]:shadow-xs [&_textarea]:focus:ring-2 [&_textarea]:focus:ring-indigo-500/20 [&_textarea]:focus:border-indigo-500">
 
             {/* Personal Info */}
             <div>
-              <h3 className="text-sm font-bold text-slate-800 mb-3 border-b border-slate-100 pb-2">Personal Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <h3 className="text-sm font-black text-slate-800 mb-4 border-b border-slate-200 pb-2.5">Personal Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
                 <div className="md:col-span-2">
                   <label className="block text-xs font-medium text-slate-700 mb-1">Full Name *</label>
                   <input type="text" name="full_name" value={FormData.full_name} onChange={handleChange} required className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. John Doe" />
@@ -158,7 +158,7 @@ const PatientFormModal = ({ isOpen, onClose }) => {
             </div>
 
             <div>
-              <h3 className="text-sm font-bold text-slate-800 mb-3 border-b border-slate-100 pb-2">Doctor Assign</h3>
+              <h3 className="text-sm font-black text-slate-800 mb-4 border-b border-slate-200 pb-2.5">Care Team</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">Select Doctor</label>
@@ -184,7 +184,7 @@ const PatientFormModal = ({ isOpen, onClose }) => {
 
             {/* Contact Info */}
             <div>
-              <h3 className="text-sm font-bold text-slate-800 mb-3 border-b border-slate-100 pb-2">Contact Details</h3>
+              <h3 className="text-sm font-black text-slate-800 mb-4 border-b border-slate-200 pb-2.5">Contact Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">Phone Number *</label>
@@ -204,7 +204,7 @@ const PatientFormModal = ({ isOpen, onClose }) => {
 
             {/* Emergency Contact */}
             <div>
-              <h3 className="text-sm font-bold text-slate-800 mb-3 border-b border-slate-100 pb-2">Emergency Contact</h3>
+              <h3 className="text-sm font-black text-slate-800 mb-4 border-b border-slate-200 pb-2.5">Emergency Contact</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">Name</label>
@@ -223,7 +223,7 @@ const PatientFormModal = ({ isOpen, onClose }) => {
 
             {/* Medical Notes */}
             <div>
-              <h3 className="text-sm font-bold text-slate-800 mb-3 border-b border-slate-100 pb-2">Medical Notes</h3>
+              <h3 className="text-sm font-black text-slate-800 mb-4 border-b border-slate-200 pb-2.5">Medical Notes</h3>
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1">Allergies or Existing Conditions</label>
                 <textarea name="note" value={FormData.note} onChange={handleChange} rows="3" className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none" placeholder="e.g. Allergic to Penicillin..."></textarea>
@@ -234,13 +234,15 @@ const PatientFormModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
-          <button type="button" onClick={onClose} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-50 transition-colors">
+        <div className="px-5 sm:px-7 py-4 border-t border-slate-200 flex items-center justify-between gap-3 bg-white">
+          <p className="hidden sm:block text-[11px] font-medium text-slate-500">Fields marked with * are required</p><div className="flex justify-end gap-3 ml-auto">
+          <button type="button" onClick={onClose} className="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
             Cancel
           </button>
-          <button type="submit" form="patient-form" className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
-            {isLoading ? 'Saving ...' : 'Save Patient'}
+          <button type="submit" form="patient-form" disabled={isLoading} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 disabled:opacity-70 transition-colors shadow-sm shadow-indigo-600/20">
+            {isLoading ? 'Saving...' : selectedPatientData ? 'Save Changes' : 'Save Patient'}
           </button>
+          </div>
         </div>
 
       </div>

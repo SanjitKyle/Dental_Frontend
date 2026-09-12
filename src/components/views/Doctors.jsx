@@ -1,29 +1,57 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Search, ChevronDown, ChevronLeft, ChevronRight, Edit, Trash2, Stethoscope, UserCheck, Star, Clock } from 'lucide-react';
+import { Search, ChevronDown, ChevronLeft, ChevronRight, Edit, Trash2, Stethoscope, UserCheck, Activity, Clock } from 'lucide-react';
 import { PatientKpi } from './SharedKpis';
 import { ContextProvider } from '../../context/store';
+import { DataPageSkeleton } from '../DataPageSkeleton';
 
 export const Doctors = ({ onAddDoctor }) => {
-  const { Doctors, setIsEditClick, setSelectedPatientData, DoctorDelete } = useContext(ContextProvider)
+  const { Doctors, setIsEditClick, setSelectedPatientData, DoctorDelete, loading } = useContext(ContextProvider)
   const [searchValue, setSearchValue] = useState("");
+  const [specializationFilter, setSpecializationFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  useEffect(()=>{
+    console.log('doctors',Doctors);
+  },[Doctors])
+  if (loading?.doctors) return <DataPageSkeleton />;
   
-  const filteredDoctors = Array.isArray(Doctors?.data) ? Doctors.data.filter((d) => {
-    if (!searchValue) return true;
+  const doctorsList = Array.isArray(Doctors?.data) ? Doctors.data : Array.isArray(Doctors) ? Doctors : [];
+  const specializations = [...new Set(doctorsList.map((doctor) => doctor?.specialization).filter(Boolean))].sort();
+  const activeDoctors = doctorsList.filter((doctor) => String(doctor?.status || '').toLowerCase() === 'active');
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const toMinutes = (time) => {
+    if (!time || !/^\d{1,2}:\d{2}/.test(time)) return null;
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  const onShiftDoctors = activeDoctors.filter((doctor) => {
+    const start = toMinutes(doctor.shift_start_time);
+    const end = toMinutes(doctor.shift_end_time);
+    if (start === null || end === null) return false;
+    return start <= end ? currentMinutes >= start && currentMinutes <= end : currentMinutes >= start || currentMinutes <= end;
+  });
+  const doctorsWithExperience = doctorsList.filter((doctor) => Number.isFinite(Number(doctor?.experience_years)));
+  const averageExperience = doctorsWithExperience.length
+    ? Math.round(doctorsWithExperience.reduce((total, doctor) => total + Number(doctor.experience_years), 0) / doctorsWithExperience.length)
+    : '—';
+  const filteredDoctors = doctorsList.filter((d) => {
     
     const searchLower = searchValue.toLowerCase();
     const nameMatch = d?.full_name?.toLowerCase()?.includes(searchLower);
     const specMatch = d?.specialization?.toLowerCase()?.includes(searchLower);
+    const phoneMatch = String(d?.phone || '').includes(searchValue);
+    const emailMatch = d?.email?.toLowerCase()?.includes(searchLower);
+    const matchesSearch = !searchValue || nameMatch || specMatch || phoneMatch || emailMatch;
+    const matchesSpecialization = specializationFilter === 'ALL' || d?.specialization === specializationFilter;
+    const matchesStatus = statusFilter === 'ALL' || String(d?.status || 'Unknown') === statusFilter;
     
-    return nameMatch || specMatch;
-  }) : [];
+    return matchesSearch && matchesSpecialization && matchesStatus;
+  });
 
-  useEffect(()=>{
-    console.log('doctors',Doctors);
-  },[Doctors])
   return (
     <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto space-y-4">
       {/* Header */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs">
+      <div className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-teal-600">
         <div>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Doctors Directory</h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">Manage medical staff, specializations, and schedules.</p>
@@ -38,16 +66,16 @@ export const Doctors = ({ onAddDoctor }) => {
 
       {/* KPI Cards (2-cols on mobile, 4-cols on desktop) */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <PatientKpi title="Total Doctors" value={Array.isArray(Doctors?.data) ? Doctors.data.length : 0} subtext="Active staff" icon={Stethoscope} percentage="100" trendUp={true} />
-        <PatientKpi title="Available Now" value="1" subtext="On shift" icon={UserCheck} percentage="50" trendUp={true} />
-        <PatientKpi title="Top Rated" value="4.9" subtext="Avg rating" icon={Star} />
-        <PatientKpi title="Avg Exp." value="10" subtext="Years" icon={Clock} />
+        <PatientKpi title="Total Doctors" value={doctorsList.length} subtext="Registered staff" icon={Stethoscope} />
+        <PatientKpi title="Active Doctors" value={activeDoctors.length} subtext="Current active status" icon={UserCheck} />
+        <PatientKpi title="On Shift" value={onShiftDoctors.length} subtext="Working right now" icon={Activity} />
+        <PatientKpi title="Avg Exp." value={averageExperience} subtext={doctorsWithExperience.length ? "Years of experience" : "Experience not available"} icon={Clock} />
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl flex flex-col shadow-xs overflow-hidden">
+      <div className="bg-white border border-slate-200/90 rounded-2xl flex flex-col shadow-xs overflow-hidden ring-1 ring-slate-100/70">
         {/* Toolbar */}
-        <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-col md:flex-row gap-3 sm:gap-4 items-center justify-between bg-slate-50/50">
+        <div className="p-3 sm:p-4 border-b border-slate-200/80 flex flex-col md:flex-row gap-3 sm:gap-4 items-center justify-between bg-slate-50/80">
           <div className="relative flex-1 max-w-md w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -59,12 +87,16 @@ export const Doctors = ({ onAddDoctor }) => {
             />
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
-            <button className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 uppercase tracking-wider transition-colors shadow-xs whitespace-nowrap">
-              All Specializations <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
-            <button className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 uppercase tracking-wider transition-colors shadow-xs whitespace-nowrap">
-              Status <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
+            <select value={specializationFilter} onChange={(event) => setSpecializationFilter(event.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 uppercase tracking-wider transition-colors shadow-xs whitespace-nowrap outline-none focus:ring-2 focus:ring-indigo-500/20">
+              <option value="ALL">All Specializations</option>
+              {specializations.map((specialization) => <option key={specialization} value={specialization}>{specialization}</option>)}
+            </select>
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 uppercase tracking-wider transition-colors shadow-xs whitespace-nowrap outline-none focus:ring-2 focus:ring-indigo-500/20">
+              <option value="ALL">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="On Leave">On Leave</option>
+              <option value="Inactive">Inactive</option>
+            </select>
           </div>
         </div>
 

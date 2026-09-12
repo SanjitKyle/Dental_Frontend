@@ -3,7 +3,7 @@ import { ContextProvider } from "../context/store";
 import { X, Calendar, Clock, User, Stethoscope } from 'lucide-react';
 import { updateAppointment } from "../services/appointments";
 
-function AppointmentForm({ setClick }) {
+function AppointmentForm({ setClick, isFollowUp = false }) {
     const { Patients, Doctors, setIsEditClick, AppointmentCreate, selectedPatientData, AppointmentUpdate } = useContext(ContextProvider);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -79,7 +79,7 @@ function AppointmentForm({ setClick }) {
                 <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white/50">
                     <h2 className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
                         <Calendar className="w-5 h-5 text-indigo-600" />
-                        {selectedPatientData ? `Edit Appointment` : ' Book Appointment'}
+                        {selectedPatientData ? 'Edit Appointment' : isFollowUp ? 'Add New Follow-Up' : 'Book Appointment'}
                     </h2>
                     <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all">
                         <X className="w-5 h-5" />
@@ -248,7 +248,7 @@ function AppointmentForm({ setClick }) {
                         Cancel
                     </button>
                     <button type="submit" form="appointment-form" disabled={isLoading} className="premium-button px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-70">
-                        {isLoading ? 'Saving...' : (selectedPatientData ? 'Edit Appointment' : 'Add Appointment')}                    </button>
+                        {isLoading ? 'Saving...' : (selectedPatientData ? 'Edit Appointment' : isFollowUp ? 'Add Follow-Up' : 'Add Appointment')}                    </button>
                 </div>
             </div>
         </div>
