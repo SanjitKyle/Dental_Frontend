@@ -1,4 +1,4 @@
-﻿import React, { useContext, useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -59,6 +59,15 @@ export const Patients = ({ onAddPatient }) => {
       )
     : "—";
 
+  const now = new Date();
+  const newThisMonth = patientsList.filter((p) => {
+    if (!p?.createdAt) return false;
+    const d = new Date(p.createdAt);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }).length;
+
+  const activePatients = patientsList.filter((p) => p?.assigned_doctor_name).length;
+
   const filteredPatients = patientsList.filter((p) => {
     const searchLower = searchValue.toLowerCase();
     const nameMatch = p?.full_name?.toLowerCase()?.includes(searchLower);
@@ -111,16 +120,16 @@ export const Patients = ({ onAddPatient }) => {
         />
         <PatientKpi
           title="New This Month"
-          value="1"
-          subtext="vs 0 last month"
+          value={newThisMonth}
+          subtext="this month"
           icon={UserPlus}
-          percentage="100"
-          trendUp={true}
+          percentage={patientsList.length ? Math.round((newThisMonth / patientsList.length) * 100) : 0}
+          trendUp={newThisMonth > 0}
         />
         <PatientKpi
           title="Active Patients"
-          value="1"
-          subtext="Recently active"
+          value={activePatients}
+          subtext="With assigned doctor"
           icon={Activity}
         />
         <PatientKpi
