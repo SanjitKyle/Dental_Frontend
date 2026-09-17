@@ -1,41 +1,431 @@
-import React, { useMemo, useState } from 'react';
-import { BriefcaseBusiness, KeyRound, Search, ShieldCheck, UserCheck, UsersRound } from 'lucide-react';
+﻿import React, { useEffect, useMemo, useState } from "react";
+import {
+  BriefcaseBusiness,
+  Edit,
+  KeyRound,
+  Loader2,
+  Plus,
+  Search,
+  ShieldCheck,
+  Trash2,
+  UserCheck,
+  UsersRound,
+  X,
+} from "lucide-react";
+import { getStaff, createStaff, updateStaff, deleteStaff } from "../../services/staff";
+import { toast } from "react-toastify";
 
-const DEMO_STAFF = [
-  { id: 1, name: 'Maya Kapoor', role: 'Clinic Administrator', department: 'Operations', phone: '+91 98765 21001', email: 'maya.kapoor@clinic.test', status: 'Active', shift: '09:00 - 18:00', access: 'Administrator', permissions: ['Staff & roles', 'Doctors', 'Appointments', 'Reports'] },
-  { id: 2, name: 'Rohan Mehta', role: 'Senior Dental Assistant', department: 'Clinical', phone: '+91 98765 21002', email: 'rohan.mehta@clinic.test', status: 'Active', shift: '10:00 - 19:00', access: 'Clinical', permissions: ['Patients', 'Appointments', 'Odontograms'] },
-  { id: 3, name: 'Priya Shah', role: 'Front Desk Executive', department: 'Reception', phone: '+91 98765 21003', email: 'priya.shah@clinic.test', status: 'Active', shift: '08:30 - 17:30', access: 'Reception', permissions: ['Patients', 'Appointments', 'Follow-ups'] },
-  { id: 4, name: 'Arjun Nair', role: 'Dental Lab Technician', department: 'Laboratory', phone: '+91 98765 21004', email: 'arjun.nair@clinic.test', status: 'On Leave', shift: '09:00 - 18:00', access: 'Limited Clinical', permissions: ['Odontograms', 'Treatment plans'] },
-  { id: 5, name: 'Neha Singh', role: 'Accounts Coordinator', department: 'Accounts', phone: '+91 98765 21005', email: 'neha.singh@clinic.test', status: 'Active', shift: '09:30 - 18:30', access: 'Accounts', permissions: ['Patient records', 'Reports'] }
-];
-
-const accessTone = {
-  Administrator: 'border-violet-200 bg-violet-50 text-violet-700',
-  Clinical: 'border-teal-200 bg-teal-50 text-teal-700',
-  Reception: 'border-sky-200 bg-sky-50 text-sky-700',
-  'Limited Clinical': 'border-amber-200 bg-amber-50 text-amber-700',
-  Accounts: 'border-slate-200 bg-slate-100 text-slate-700'
+// ─── helpers ────────────────────────────────────────────────────────────────
+const getToken = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    return user?.token || user?.data?.token || user?.accessToken || user?.data?.accessToken || "";
+  } catch {
+    return "";
+  }
 };
 
+const EMPLOYMENT_TYPES = ["NURSE", "RECEPTIONIST", "ADMIN", "TECHNICIAN", "BILLING"];
+const EMPLOYMENT_MODES = ["FULL_TIME", "PART_TIME", "CONTRACT"];
+const STATUS_OPTIONS = ["ACTIVE", "ON_LEAVE", "SUSPENDED", "TERMINATED"];
+
+const statusStyle = {
+  ACTIVE: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  ON_LEAVE: "border-amber-200 bg-amber-50 text-amber-700",
+  SUSPENDED: "border-red-200 bg-red-50 text-red-700",
+  TERMINATED: "border-slate-200 bg-slate-100 text-slate-500",
+};
+
+const employmentStyle = {
+  NURSE: "border-teal-200 bg-teal-50 text-teal-700",
+  RECEPTIONIST: "border-sky-200 bg-sky-50 text-sky-700",
+  ADMIN: "border-violet-200 bg-violet-50 text-violet-700",
+  TECHNICIAN: "border-amber-200 bg-amber-50 text-amber-700",
+  BILLING: "border-slate-200 bg-slate-100 text-slate-700",
+};
+
+const EMPTY_FORM = {
+  fullName: "",
+  email: "",
+  phoneNumber: "",
+  employment: "",
+  designation: "",
+  department: "",
+  employmentType: "",
+  dateOfJoining: "",
+  status: "ACTIVE",
+  permissions: "",
+  emergencyContact: { name: "", relation: "", phone: "" },
+};
+
+// ─── Staff Form Modal ────────────────────────────────────────────────────────
+const StaffModal = ({ isOpen, onClose, onSave, initial }) => {
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setForm(
+        initial
+          ? {
+              ...EMPTY_FORM,
+              ...initial,
+              permissions: Array.isArray(initial.permissions)
+                ? initial.permissions.join(", ")
+                : initial.permissions || "",
+              emergencyContact: initial.emergencyContact || { name: "", relation: "", phone: "" },
+            }
+          : EMPTY_FORM
+      );
+    }
+  }, [isOpen, initial]);
+
+  if (!isOpen) return null;
+
+  const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+  const setEC = (field, value) =>
+    setForm((f) => ({ ...f, emergencyContact: { ...f.emergencyContact, [field]: value } }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      const payload = {
+        ...form,
+        permissions: form.permissions
+          ? form.permissions.split(",").map((p) => p.trim()).filter(Boolean)
+          : [],
+      };
+      await onSave(payload);
+      onClose();
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Something went wrong.";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-white/80">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white">
+          <div>
+            <h2 className="text-lg font-black text-slate-900">
+              {initial ? "Edit Staff Member" : "Add Staff Member"}
+            </h2>
+            <p className="text-[11px] font-medium text-slate-500">Fill in the staff details below</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div className="overflow-y-auto px-6 py-5 space-y-5">
+          <form id="staff-form" onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Full Name *</label>
+                <input required value={form.fullName} onChange={(e) => set("fullName", e.target.value)} placeholder="e.g. Maya Kapoor" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Email *</label>
+                <input required type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="staff@clinic.com" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Phone Number *</label>
+                <input required value={form.phoneNumber} onChange={(e) => set("phoneNumber", e.target.value)} placeholder="+91 98765 00000" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Department *</label>
+                <input required value={form.department} onChange={(e) => set("department", e.target.value)} placeholder="e.g. Operations" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Employment Role *</label>
+                <select required value={form.employment} onChange={(e) => set("employment", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500">
+                  <option value="">Select role...</option>
+                  {EMPLOYMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Employment Type</label>
+                <select value={form.employmentType} onChange={(e) => set("employmentType", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500">
+                  <option value="">Select type...</option>
+                  {EMPLOYMENT_MODES.map((t) => <option key={t} value={t}>{t.replace("_", " ")}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Designation</label>
+                <input value={form.designation} onChange={(e) => set("designation", e.target.value)} placeholder="e.g. Senior Dental Assistant" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Date of Joining</label>
+                <input type="date" value={form.dateOfJoining ? form.dateOfJoining.slice(0, 10) : ""} onChange={(e) => set("dateOfJoining", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 text-slate-600" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                <select value={form.status} onChange={(e) => set("status", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500">
+                  {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Permissions <span className="text-slate-400 font-normal">(comma-separated)</span></label>
+                <input value={form.permissions} onChange={(e) => set("permissions", e.target.value)} placeholder="Patients, Appointments, Reports" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+              </div>
+            </div>
+
+            {/* Emergency Contact */}
+            <div>
+              <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-100 pb-2">Emergency Contact</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
+                  <input value={form.emergencyContact.name} onChange={(e) => setEC("name", e.target.value)} placeholder="Jane Doe" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Relation</label>
+                  <input value={form.emergencyContact.relation} onChange={(e) => setEC("relation", e.target.value)} placeholder="Spouse" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Phone</label>
+                  <input value={form.emergencyContact.phone} onChange={(e) => setEC("phone", e.target.value)} placeholder="+91 98765 00001" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 bg-white">
+          <button type="button" onClick={onClose} className="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">Cancel</button>
+          <button type="submit" form="staff-form" disabled={saving} className="px-5 py-2.5 bg-cyan-600 text-white rounded-xl text-sm font-bold hover:bg-cyan-700 disabled:opacity-70 transition-colors">
+            {saving ? "Saving..." : initial ? "Save Changes" : "Add Staff"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Main Staff Component ────────────────────────────────────────────────────
 export const Staff = () => {
-  const [query, setQuery] = useState('');
-  const [accessFilter, setAccessFilter] = useState('ALL');
-  const accessLevels = [...new Set(DEMO_STAFF.map((person) => person.access))];
-  const filteredStaff = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    return DEMO_STAFF.filter((person) => {
-      const matchesSearch = !term || [person.name, person.role, person.department, person.phone, person.email, person.access, ...person.permissions].some((value) => value.toLowerCase().includes(term));
-      return matchesSearch && (accessFilter === 'ALL' || person.access === accessFilter);
-    });
-  }, [query, accessFilter]);
-  const activeCount = DEMO_STAFF.filter((person) => person.status === 'Active').length;
-  const privilegedCount = DEMO_STAFF.filter((person) => person.access === 'Administrator' || person.access === 'Clinical').length;
+  const [staffList, setStaffList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
 
-  return <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto space-y-4">
-    <section className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-cyan-600"><div><h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900">Staff & Access</h1><p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">Demo clinic workforce, shift coverage, and role permissions.</p></div><span className="inline-flex items-center gap-2 rounded-xl border border-cyan-100 bg-cyan-50 px-3 py-2 text-xs font-bold text-cyan-800"><BriefcaseBusiness className="w-4 h-4" /> Demo data</span></section>
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><Metric title="Team members" value={DEMO_STAFF.length} caption="Listed demo records" icon={UsersRound} color="text-cyan-600" /><Metric title="Active staff" value={activeCount} caption="Available team members" icon={UserCheck} color="text-emerald-600" /><Metric title="Clinical access" value={privilegedCount} caption="Admin or clinical roles" icon={ShieldCheck} color="text-violet-600" /></div>
-    <section className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs ring-1 ring-slate-100/70"><div className="p-3 sm:p-4 border-b border-slate-200/80 bg-slate-50/80 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between"><div className="relative w-full max-w-md"><Search className="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-slate-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search staff, role, access, or permission..." className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm font-medium text-slate-700 outline-none shadow-xs focus:border-cyan-600 focus:ring-2 focus:ring-cyan-500/20" /></div><select value={accessFilter} onChange={(event) => setAccessFilter(event.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-cyan-500/20"><option value="ALL">All access levels</option>{accessLevels.map((level) => <option key={level} value={level}>{level}</option>)}</select></div><div className="overflow-x-auto"><table className="w-full min-w-[1100px] text-left"><thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-500"><tr><th className="px-5 py-3.5">Staff member</th><th className="px-5 py-3.5">Department</th><th className="px-5 py-3.5">Shift</th><th className="px-5 py-3.5">Access level</th><th className="px-5 py-3.5">Key permissions</th><th className="px-5 py-3.5">Status</th></tr></thead><tbody className="divide-y divide-slate-100">{filteredStaff.map((person) => <tr key={person.id} className="hover:bg-cyan-50/30"><td className="px-5 py-4"><div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-100 text-xs font-black text-cyan-800">{person.name.split(' ').map((part) => part[0]).join('')}</div><div><p className="font-bold text-slate-900">{person.name}</p><p className="text-xs font-medium text-slate-500">{person.role}</p><p className="text-[11px] text-slate-400">{person.email}</p></div></div></td><td className="px-5 py-4"><span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">{person.department}</span></td><td className="px-5 py-4"><p className="text-sm font-bold text-slate-700">{person.shift}</p><p className="text-[11px] font-medium text-slate-400">Clinic local time</p></td><td className="px-5 py-4"><span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${accessTone[person.access]}`}><KeyRound className="w-3 h-3" />{person.access}</span></td><td className="px-5 py-4"><div className="flex max-w-[250px] flex-wrap gap-1">{person.permissions.map((permission) => <span key={permission} className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600">{permission}</span>)}</div></td><td className="px-5 py-4"><span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${person.status === 'Active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>{person.status}</span></td></tr>)}{filteredStaff.length === 0 && <tr><td colSpan="6" className="px-5 py-14 text-center text-sm font-medium text-slate-500">No staff members match this search or access level.</td></tr>}</tbody></table></div></section>
-  </div>;
+  const token = getToken();
+
+  const fetchStaff = async () => {
+    try {
+      setLoading(true);
+      const data = await getStaff(token);
+      const list = Array.isArray(data) ? data : data?.data || data?.staff || [];
+      setStaffList(list);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to load staff.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchStaff(); }, []);
+
+  const handleSave = async (payload) => {
+    if (editTarget) {
+      await updateStaff(token, editTarget._id, payload);
+      toast.success("Staff member updated!");
+    } else {
+      await createStaff(token, payload);
+      toast.success("Staff member added!");
+    }
+    await fetchStaff();
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this staff member?")) return;
+    try {
+      await deleteStaff(token, id);
+      toast.success("Staff member deleted.");
+      await fetchStaff();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete staff.");
+    }
+  };
+
+  const openAdd = () => { setEditTarget(null); setModalOpen(true); };
+  const openEdit = (person) => { setEditTarget(person); setModalOpen(true); };
+
+  const statuses = ["ALL", ...new Set(staffList.map((s) => s.status).filter(Boolean))];
+
+  const filtered = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return staffList.filter((s) => {
+      const fields = [s.fullName, s.email, s.phoneNumber, s.employment, s.designation, s.department, s.employmentType, ...(s.permissions || [])];
+      const matchSearch = !term || fields.some((f) => f?.toLowerCase().includes(term));
+      const matchStatus = statusFilter === "ALL" || s.status === statusFilter;
+      return matchSearch && matchStatus;
+    });
+  }, [staffList, query, statusFilter]);
+
+  const activeCount = staffList.filter((s) => s.status === "ACTIVE").length;
+  const adminCount = staffList.filter((s) => s.employment === "ADMIN").length;
+
+  return (
+    <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto space-y-4">
+      {/* Header */}
+      <section className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-cyan-600">
+        <div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900">Staff & Access</h1>
+          <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">Manage clinic workforce, roles, and permissions.</p>
+        </div>
+        <button onClick={openAdd} className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 border border-cyan-700 rounded-xl text-white hover:bg-cyan-700 text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer">
+          <Plus className="w-4 h-4" /> Add Staff
+        </button>
+      </section>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <Metric title="Team Members" value={loading ? "—" : staffList.length} caption="Total staff records" icon={UsersRound} color="text-cyan-600" />
+        <Metric title="Active Staff" value={loading ? "—" : activeCount} caption="Currently active" icon={UserCheck} color="text-emerald-600" />
+        <Metric title="Admin Roles" value={loading ? "—" : adminCount} caption="Administrative access" icon={ShieldCheck} color="text-violet-600" />
+      </div>
+
+      {/* Table Card */}
+      <section className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs ring-1 ring-slate-100/70">
+        {/* Toolbar */}
+        <div className="p-3 sm:p-4 border-b border-slate-200/80 bg-slate-50/80 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-slate-400" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, role, department, permission..." className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm font-medium text-slate-700 outline-none shadow-xs focus:border-cyan-600 focus:ring-2 focus:ring-cyan-500/20" />
+          </div>
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-cyan-500/20">
+            {statuses.map((s) => <option key={s} value={s}>{s === "ALL" ? "All Statuses" : s.replace("_", " ")}</option>)}
+          </select>
+        </div>
+
+        {/* Loading */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20 gap-3 text-slate-500">
+            <Loader2 className="w-5 h-5 animate-spin text-cyan-600" />
+            <span className="text-sm font-medium">Loading staff...</span>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-left">
+              <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th className="px-5 py-3.5">Staff Member</th>
+                  <th className="px-5 py-3.5">Department</th>
+                  <th className="px-5 py-3.5">Role / Type</th>
+                  <th className="px-5 py-3.5">Permissions</th>
+                  <th className="px-5 py-3.5">Date Joined</th>
+                  <th className="px-5 py-3.5">Status</th>
+                  <th className="px-5 py-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="px-5 py-16 text-center text-sm font-medium text-slate-500">
+                      {staffList.length === 0 ? "No staff members found. Add your first staff member." : "No staff members match your search."}
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((person) => {
+                    const initials = person.fullName
+                      ? person.fullName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase()
+                      : "?";
+                    const joinedDate = person.dateOfJoining
+                      ? new Date(person.dateOfJoining).toLocaleDateString()
+                      : "—";
+                    return (
+                      <tr key={person._id} className="hover:bg-cyan-50/30 transition-colors">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-100 text-xs font-black text-cyan-800 shrink-0">{initials}</div>
+                            <div>
+                              <p className="font-bold text-slate-900">{person.fullName}</p>
+                              <p className="text-xs font-medium text-slate-500">{person.designation || "—"}</p>
+                              <p className="text-[11px] text-slate-400">{person.email}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">{person.department || "—"}</span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${employmentStyle[person.employment] || "border-slate-200 bg-slate-100 text-slate-700"}`}>
+                            <KeyRound className="w-3 h-3" />{person.employment || "—"}
+                          </span>
+                          {person.employmentType && (
+                            <p className="text-[10px] text-slate-400 mt-1">{person.employmentType.replace("_", " ")}</p>
+                          )}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex max-w-[220px] flex-wrap gap-1">
+                            {person.permissions?.length > 0
+                              ? person.permissions.map((perm) => (
+                                  <span key={perm} className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600">{perm}</span>
+                                ))
+                              : <span className="text-xs text-slate-400">—</span>}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-sm font-semibold text-slate-600">{joinedDate}</td>
+                        <td className="px-5 py-4">
+                          <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyle[person.status] || "border-slate-200 bg-slate-100 text-slate-500"}`}>
+                            {person.status?.replace("_", " ") || "—"}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => openEdit(person)} className="p-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors rounded-lg cursor-pointer">
+                              <Edit className="w-4 h-4 text-cyan-600" />
+                            </button>
+                            <button onClick={() => handleDelete(person._id)} className="p-1.5 border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors rounded-lg cursor-pointer">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Footer */}
+        {!loading && (
+          <div className="p-3 sm:p-4 border-t border-slate-100 text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-50/50">
+            Showing {filtered.length} of {staffList.length} staff members
+          </div>
+        )}
+      </section>
+
+      {/* Add / Edit Modal */}
+      <StaffModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSave}
+        initial={editTarget}
+      />
+    </div>
+  );
 };
 
-const Metric = ({ title, value, caption, icon: Icon, color }) => <section className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs"><div className="flex items-center justify-between"><p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{title}</p><Icon className={`w-5 h-5 ${color}`} /></div><p className="mt-4 text-3xl font-black text-slate-900">{value}</p><p className="mt-1 text-xs font-medium text-slate-500">{caption}</p></section>;
+const Metric = ({ title, value, caption, icon: Icon, color }) => (
+  <section className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs">
+    <div className="flex items-center justify-between">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{title}</p>
+      <Icon className={`w-5 h-5 ${color}`} />
+    </div>
+    <p className="mt-4 text-3xl font-black text-slate-900">{value}</p>
+    <p className="mt-1 text-xs font-medium text-slate-500">{caption}</p>
+  </section>
+);
