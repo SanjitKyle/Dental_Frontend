@@ -1,18 +1,24 @@
-import React from 'react';
+﻿import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, CalendarDays, Pill, 
-  Clock, Activity, MoreHorizontal 
+  Clock
 } from 'lucide-react';
+import { ContextProvider } from '../context/store';
+import { canAccessRoute, ROLES } from '../utils/rbac';
 
-const MobileBottomNav = ({ onOpenMore }) => {
-  const primaryNavItems = [
-    { id: 'dashboard', label: 'Home', icon: LayoutDashboard, path: '/dashboard' },
+const MobileBottomNav = () => {
+  const { userRole } = useContext(ContextProvider);
+
+  const rawNavItems = [
+    { id: 'dashboard', label: userRole === ROLES.PATIENT ? 'Home' : 'Home', icon: LayoutDashboard, path: '/dashboard' },
     { id: 'patients', label: 'Patients', icon: Users, path: '/patients' },
     { id: 'appointments', label: 'Appts', icon: CalendarDays, path: '/appointments' },
     { id: 'prescriptions', label: 'Rx', icon: Pill, path: '/prescriptions' },
     { id: 'follow-up', label: 'Follow Up', icon: Clock, path: '/follow-up' },
   ];
+
+  const primaryNavItems = rawNavItems.filter((item) => canAccessRoute(item.path, userRole));
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] px-2 py-1.5 flex items-center justify-around safe-bottom">

@@ -1,27 +1,37 @@
-import React from 'react';
+﻿import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, CalendarDays, Stethoscope, MessageSquare,
-  UsersRound, Settings, Globe, Pill, Activity, X 
+  UsersRound, Settings, Globe, Pill, Activity, X, Shield, Clock
 } from 'lucide-react';
+import { ContextProvider } from '../context/store';
+import { canAccessRoute, ROLE_DETAILS, ROLES } from '../utils/rbac';
 
 const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  const { userRole, currentUser } = useContext(ContextProvider);
+
+  const rawMenuItems = [
+    { id: 'dashboard', label: userRole === ROLES.PATIENT ? 'My Dashboard' : 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { id: 'patients', label: 'Patients', icon: Users, path: '/patients' },
     { id: 'doctors', label: 'Doctors', icon: Stethoscope, path: '/doctors' },
-    { id: 'appointments', label: 'Appointments', icon: CalendarDays, path: '/appointments' },
+    { id: 'appointments', label: userRole === ROLES.PATIENT ? 'My Appointments' : 'Appointments', icon: CalendarDays, path: '/appointments' },
     { id: 'odontograms', label: 'Odontograms', icon: Activity, path: '/odontograms' },
-    { id: 'prescriptions', label: 'Prescriptions', icon: Pill, path: '/prescriptions' },
-    { id: 'follow up', label: 'Follow Up', icon: CalendarDays, path: '/follow-up' },
+    { id: 'prescriptions', label: userRole === ROLES.PATIENT ? 'My Prescriptions' : 'Prescriptions', icon: Pill, path: '/prescriptions' },
+    { id: 'follow up', label: 'Follow Up', icon: Clock, path: '/follow-up' },
     { id: 'enquiries', label: 'Enquiries', icon: MessageSquare, path: '/enquiries' },
   ];
 
-  const managementItems = [
-    { id: 'staff', label: 'Staff', icon: UsersRound, path: '/staff' },
+  const rawManagementItems = [
+    { id: 'staff', label: 'Staff & Roles', icon: UsersRound, path: '/staff' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
     { id: 'website', label: 'Website', icon: Globe, path: '/website' },
   ];
+
+  // Filter based on active user role permissions
+  const menuItems = rawMenuItems.filter((item) => canAccessRoute(item.path, userRole));
+  const managementItems = rawManagementItems.filter((item) => canAccessRoute(item.path, userRole));
+
+  const roleMeta = ROLE_DETAILS[userRole] || { label: userRole || 'User', badgeClass: 'bg-slate-800 text-slate-300 border-slate-700' };
 
   const renderNav = (items) => (
     <nav className="space-y-1">
@@ -53,14 +63,35 @@ const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
   );
 
   const sidebarContent = (
-    <div className="flex-1 overflow-y-auto py-5 px-3 space-y-6 relative z-10">
-      <div>
-        <p className="px-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2.5">Main Menu</p>
-        {renderNav(menuItems)}
+    <div className="flex-1 flex flex-col justify-between overflow-y-auto py-5 px-3 space-y-6 relative z-10">
+      <div className="space-y-6">
+        <div>
+          <p className="px-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2.5">Main Menu</p>
+          {renderNav(menuItems)}
+        </div>
+        {managementItems.length > 0 && (
+          <div>
+            <p className="px-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2.5">Management</p>
+            {renderNav(managementItems)}
+          </div>
+        )}
       </div>
-      <div>
-        <p className="px-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2.5">Management</p>
-        {renderNav(managementItems)}
+
+      {/* Role Indicator Footer Card */}
+      <div className="p-3 bg-slate-800/70 border border-slate-700/80 rounded-2xl">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-slate-700 border border-slate-600 flex items-center justify-center font-black text-xs text-white uppercase">
+            {(currentUser?.name || currentUser?.fullName || 'U').slice(0, 2).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-white truncate capitalize">
+              {currentUser?.name || currentUser?.fullName || 'User'}
+            </p>
+            <span className={`inline-block text-[10px] font-black uppercase px-2 py-0.5 rounded-md border mt-0.5 ${roleMeta.badgeClass}`}>
+              {roleMeta.label}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -75,15 +106,12 @@ const Sidebar = ({ isMobileOpen, onCloseMobile }) => {
       {/* 2. Mobile Drawer Slide-Out */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden animate-[fadeIn_0.2s_ease-out]">
-          {/* Backdrop */}
           <div 
             className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity cursor-pointer"
             onClick={onCloseMobile}
           />
 
-          {/* Sliding Menu */}
           <div className="relative w-72 max-w-[80vw] h-full bg-slate-900 border-r border-slate-800 shadow-2xl flex flex-col z-50 animate-[slideInLeft_0.25s_ease-out]">
-            {/* Mobile Drawer Header */}
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-sm">

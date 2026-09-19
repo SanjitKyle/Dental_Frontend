@@ -1,9 +1,11 @@
-import { createContext, useContext, useEffect, useState } from "react";
+﻿import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { CreatePatient, getPatients, EditPatients, DeletePatient } from "../services/patients";
 import { AddDoctor, getDoctors } from "../services/doctor";
 import { createAppointment, getAppointments, updateAppointment, deleteAppointment } from "../services/appointments";
 import { getPrescriptions } from "../services/prescriptions";
 import { axiosInstance } from "../services/axiosInstance";
+import { normalizeRole, canAccessRoute } from "../utils/rbac";
+
 export const ContextProvider = createContext();
 
 function StoreManagement({ children }) {
@@ -21,22 +23,37 @@ function StoreManagement({ children }) {
     const [loading, setLoading] = useState({ patients: true, doctors: true, appointments: true, prescriptions: true });
     const [isEditClick, setIsEditClick] = useState(false);
     const [selectedPatientData, setSelectedPatientData] = useState(null);
+
+    // Parse current logged-in user and role dynamically
+    const currentUser = useMemo(() => {
+        try {
+            const raw = user || localStorage.getItem("user");
+            if (!raw) return null;
+            const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+            return parsed?.data?.user || parsed?.user || parsed?.data || parsed;
+        } catch {
+            return null;
+        }
+    }, [user]);
+
+    const userRole = useMemo(() => {
+        const rawRole = currentUser?.role || currentUser?.employment || "admin";
+        return normalizeRole(rawRole);
+    }, [currentUser]);
+
+    const canAccess = (path) => canAccessRoute(path, userRole);
+
     async function getAllPatience() {
         setLoading((current) => ({ ...current, patients: true }));
         try {
-
             const res = await getPatients(token);
             console.log('response', res);
-            setPatients(res.data.data)
-
-
+            setPatients(res.data.data);
         } catch (error) {
             throw error;
         } finally {
             setLoading((current) => ({ ...current, patients: false }));
         }
-
-
     }
 
     async function getAllDoctor() {
@@ -44,10 +61,9 @@ function StoreManagement({ children }) {
         try {
             const getalldoctor = await getDoctors(token);
             console.log('getting all doctor', getalldoctor);
-            setDoctors(getalldoctor)
-
+            setDoctors(getalldoctor);
         } catch (error) {
-            console.log('error', error)
+            console.log('error', error);
         } finally {
             setLoading((current) => ({ ...current, doctors: false }));
         }
@@ -58,7 +74,7 @@ function StoreManagement({ children }) {
         try {
             const res = await getAppointments(token);
             console.log('getting all appointments', res);
-            setAppointments(res.data || res); // Adapt based on actual API response structure
+            setAppointments(res.data || res);
         } catch (error) {
             console.log('error getting appointments', error);
         } finally {
@@ -83,27 +99,29 @@ function StoreManagement({ children }) {
     async function PatientCreate(formData) {
         try {
             const res = await CreatePatient(formData, token);
-            await getAllPatience(); // <--- Fix: Call the local function that actually updates the React state
-
-        } catch (error) {
-            throw error
-        }
-    }
-    async function PatientEdit(id, formData) {
-        try {
-            const res = await EditPatients(token, id, formData);
             await getAllPatience();
+            return res;
         } catch (error) {
             throw error;
         }
     }
+
+    async function PatientEdit(id, formData) {
+        try {
+            const res = await EditPatients(token, id, formData);
+            await getAllPatience();
+            return res;
+        } catch (error) {
+            throw error;
+        }
+    }
+
     async function CreateDoctor(formData) {
         try {
-
             const response = await AddDoctor(token, formData);
-            console.log('response to create doctor', response)
-            await getAllDoctor()
-
+            console.log('response to create doctor', response);
+            await getAllDoctor();
+            return response;
         } catch (err) {
             throw err;
         }
@@ -122,11 +140,11 @@ function StoreManagement({ children }) {
 
     async function AppointmentUpdate(fomdata, id) {
         try {
-            const res = await updateAppointment(token, id, fomdata)
+            const res = await updateAppointment(token, id, fomdata);
             await getAllAppointments();
             return res;
         } catch (error) {
-            console.log('error', error)
+            console.log('error', error);
         }
     }
 
@@ -193,22 +211,22 @@ function StoreManagement({ children }) {
             getAllAppointments(),
             getAllPrescriptions()
         ]).finally(() => setDashboardLoading(false));
-    }, [token])
-    useEffect(() => {
-        console.log('res to get patients', Patients)
-    }, [Patients])
+    }, [token]);
+
     return (
-        <ContextProvider value={{
-            user, setUser, token,
+        <ContextProvider.Provider value={{
+            user, setUser, token, currentUser, userRole, canAccess,
             selectedPatientData, setSelectedPatientData,
             Patients, PatientCreate, PatientEdit, PatientDelete,
             CreateDoctor, Doctors, DoctorEdit, DoctorDelete,
             Appointments, AppointmentCreate, getAllAppointments,
             Prescriptions, getAllPrescriptions, dashboardLoading, loading,
-            setIsEditClick, isEditClick, AppointmentUpdate, AppointmentDelete,setIsAuthenticated,isAuthenticated
+            setIsEditClick, isEditClick, AppointmentUpdate, AppointmentDelete,
+            setIsAuthenticated, isAuthenticated
         }}>
             {children}
-        </ContextProvider>
-    )
+        </ContextProvider.Provider>
+    );
 }
-export default StoreManagement
+
+export default StoreManagement;

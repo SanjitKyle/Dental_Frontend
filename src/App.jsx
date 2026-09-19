@@ -19,15 +19,16 @@ import DoctorFormModal from "./components/DoctorFormModal";
 import Login from "./components/Login";
 import Register from "./components/register";
 import StoreManagement from "./context/store";
-import { ContextProvider } from "./context/store";
 import FollowUp from "./components/views/follow-ip";
 import { Staff } from "./components/views/Staff";
 import { Enquiries } from "./components/views/Enquiries";
+import Unauthorized from "./components/views/Unauthorized";
 import MobileBottomNav from "./components/MobileBottomNav";
+import RoleRoute from "./components/RoleRoute";
+import { ROLES } from "./utils/rbac";
 
 // ============================================================================
 // 1. MAIN APPLICATION LAYOUT
-// Acts as an Outlet for authenticated routes.
 // ============================================================================
 const MainLayout = ({ isPatientModalOpen, closePatientModal, isDoctorModalOpen, closeDoctorModal, onLogout }) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -52,7 +53,6 @@ const MainLayout = ({ isPatientModalOpen, closePatientModal, isDoctorModalOpen, 
         />
 
         <main className="flex-1 overflow-y-auto w-full relative pb-20 md:pb-6">
-          {/* Outlet renders the matched child route component */}
           <Outlet />
         </main>
       </div>
@@ -69,7 +69,6 @@ const MainLayout = ({ isPatientModalOpen, closePatientModal, isDoctorModalOpen, 
 
 // ============================================================================
 // 2. PROTECTED ROUTE WRAPPER
-// Redirects to /login if the user is not authenticated.
 // ============================================================================
 const ProtectedRoute = ({ isAuthenticated }) => {
   if (!isAuthenticated) {
@@ -80,7 +79,6 @@ const ProtectedRoute = ({ isAuthenticated }) => {
 
 // ============================================================================
 // 3. ROOT COMPONENT
-// Configures the Router and all application routes.
 // ============================================================================
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -119,7 +117,7 @@ function App() {
       />
       <BrowserRouter>
         <Routes>
-          {/* Public Route */}
+          {/* Public Routes */}
           <Route
             path="/login"
             element={
@@ -155,19 +153,55 @@ function App() {
             >
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard onAddPatient={openPatientModal} onAddDoctor={openDoctorModal} />} />
-              <Route path="/patients" element={<Patients onAddPatient={openPatientModal} />} />
-              <Route path="/doctors" element={<Doctors onAddDoctor={openDoctorModal} />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/odontograms" element={<Odontograms />} />
-              <Route path="/prescriptions" element={<Prescriptions />} />
-              <Route path="/test-reports" element={<EmptyView title="Test Reports" />} />
-              <Route path="/billing" element={<EmptyView title="Billing" />} />
-              <Route path="/inventory" element={<EmptyView title="Inventory" />} />
-              <Route path="/staff" element={<Staff />} />
-              <Route path="/settings" element={<EmptyView title="Settings" />} />
-              <Route path="/website" element={<EmptyView title="Website Management" />} />
-              <Route path="/follow-up" element={<FollowUp />} />
-              <Route path="/enquiries" element={<Enquiries />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
+
+              {/* Patients: Admin, Doctor, Staff */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF]} />}>
+                <Route path="/patients" element={<Patients onAddPatient={openPatientModal} />} />
+              </Route>
+
+              {/* Admin-Only Management Modules */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
+                <Route path="/doctors" element={<Doctors onAddDoctor={openDoctorModal} />} />
+                <Route path="/staff" element={<Staff />} />
+                <Route path="/settings" element={<EmptyView title="Settings" />} />
+                <Route path="/website" element={<EmptyView title="Website Management" />} />
+              </Route>
+
+              {/* Appointments: All authenticated users */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT]} />}>
+                <Route path="/appointments" element={<Appointments />} />
+              </Route>
+
+              {/* Odontograms: Admin, Doctor, Staff */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF]} />}>
+                <Route path="/odontograms" element={<Odontograms />} />
+              </Route>
+
+              {/* Prescriptions: Admin, Doctor, Patient */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.PATIENT]} />}>
+                <Route path="/prescriptions" element={<Prescriptions />} />
+              </Route>
+
+              {/* Follow-Up: Admin, Doctor, Staff */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF]} />}>
+                <Route path="/follow-up" element={<FollowUp />} />
+              </Route>
+
+              {/* Enquiries: Admin, Staff */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]} />}>
+                <Route path="/enquiries" element={<Enquiries />} />
+              </Route>
+
+              {/* Other modules */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]} />}>
+                <Route path="/billing" element={<EmptyView title="Billing" />} />
+                <Route path="/inventory" element={<EmptyView title="Inventory" />} />
+              </Route>
+
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT]} />}>
+                <Route path="/test-reports" element={<EmptyView title="Test Reports" />} />
+              </Route>
             </Route>
           </Route>
         </Routes>

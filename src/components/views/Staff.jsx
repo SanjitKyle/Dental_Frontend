@@ -1,6 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState } from "react";
 import {
-  BriefcaseBusiness,
   Edit,
   KeyRound,
   Loader2,
@@ -15,68 +14,182 @@ import {
 import { getStaff, createStaff, updateStaff, deleteStaff } from "../../services/staff";
 import { toast } from "react-toastify";
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// ─── Token helper ─────────────────────────────────────────────────────────────
 const getToken = () => {
   try {
     const user = JSON.parse(localStorage.getItem("user") || "null");
-    return user?.token || user?.data?.token || user?.accessToken || user?.data?.accessToken || "";
+    return (
+      user?.token ||
+      user?.data?.token ||
+      user?.accessToken ||
+      user?.data?.accessToken ||
+      ""
+    );
   } catch {
     return "";
   }
 };
 
-const EMPLOYMENT_TYPES = ["NURSE", "RECEPTIONIST", "ADMIN", "TECHNICIAN", "BILLING"];
-const EMPLOYMENT_MODES = ["FULL_TIME", "PART_TIME", "CONTRACT"];
-const STATUS_OPTIONS = ["ACTIVE", "ON_LEAVE", "SUSPENDED", "TERMINATED"];
+// ─── Schema enums (exact values from backend) ─────────────────────────────────
+const EMPLOYMENT_ROLES = ["NURSE", "RECEPTIONIST", "ADMIN", "TECHNICIAN", "BILLING"];
+const EMPLOYMENT_TYPES = ["FULL_TIME", "PART_TIME", "CONTRACT"];
+const STATUS_OPTIONS   = ["ACTIVE", "ON_LEAVE", "SUSPENDED", "TERMINATED"];
 
+const PERMISSION_GROUPS = [
+  {
+    label: "Patients",
+    perms: ["VIEW_PATIENT", "CREATE_PATIENT", "EDIT_PATIENT", "DELETE_PATIENT"],
+  },
+  {
+    label: "Appointments",
+    perms: [
+      "VIEW_APPOINTMENT",
+      "CREATE_APPOINTMENT",
+      "EDIT_APPOINTMENT",
+      "CANCEL_APPOINTMENT",
+    ],
+  },
+  {
+    label: "Admin & Billing",
+    perms: ["PROCESS_BILLING", "VIEW_REPORTS", "MANAGE_INVENTORY", "MANAGE_STAFF"],
+  },
+  {
+    label: "Enquiries",
+    perms: ["VIEW_ENQUIRY", "MANAGE_ENQUIRY", "EDIT_ENQUIRY", "DELETE_ENQUIRY"],
+  },
+  {
+    label: "Follow-ups",
+    perms: ["MANAGE_FOLLOW_UP", "EDIT_FOLLOW_UP", "DELETE_FOLLOW_UP"],
+  },
+  {
+    label: "Odontogram",
+    perms: [
+      "VIEW_ODONTOGRAM",
+      "CREATE_ODONTOGRAM",
+      "EDIT_ODONTOGRAM",
+      "DELETE_ODONTOGRAM",
+    ],
+  },
+];
+
+// ─── Style maps ───────────────────────────────────────────────────────────────
 const statusStyle = {
-  ACTIVE: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  ON_LEAVE: "border-amber-200 bg-amber-50 text-amber-700",
-  SUSPENDED: "border-red-200 bg-red-50 text-red-700",
+  ACTIVE:     "border-emerald-200 bg-emerald-50 text-emerald-700",
+  ON_LEAVE:   "border-amber-200 bg-amber-50 text-amber-700",
+  SUSPENDED:  "border-red-200 bg-red-50 text-red-700",
   TERMINATED: "border-slate-200 bg-slate-100 text-slate-500",
 };
 
 const employmentStyle = {
-  NURSE: "border-teal-200 bg-teal-50 text-teal-700",
+  NURSE:        "border-teal-200 bg-teal-50 text-teal-700",
   RECEPTIONIST: "border-sky-200 bg-sky-50 text-sky-700",
-  ADMIN: "border-violet-200 bg-violet-50 text-violet-700",
-  TECHNICIAN: "border-amber-200 bg-amber-50 text-amber-700",
-  BILLING: "border-slate-200 bg-slate-100 text-slate-700",
+  ADMIN:        "border-violet-200 bg-violet-50 text-violet-700",
+  TECHNICIAN:   "border-amber-200 bg-amber-50 text-amber-700",
+  BILLING:      "border-slate-200 bg-slate-100 text-slate-700",
 };
 
+// ─── Blank form ───────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
-  fullName: "",
-  email: "",
-  phoneNumber: "",
-  employment: "",
-  designation: "",
-  department: "",
-  employmentType: "",
-  dateOfJoining: "",
-  status: "ACTIVE",
-  permissions: "",
+  fullName:        "",
+  email:           "",
+  phoneNumber:     "",
+  employment:      "",
+  designation:     "",
+  department:      "",
+  employmentType:  "FULL_TIME",
+  dateOfJoining:   "",
+  status:          "ACTIVE",
+  permissions:     [],
   emergencyContact: { name: "", relation: "", phone: "" },
 };
 
-// ─── Staff Form Modal ────────────────────────────────────────────────────────
+// ─── Permissions checkbox panel ───────────────────────────────────────────────
+const PermissionSelector = ({ selected, onChange }) => {
+  const toggle = (perm) => {
+    if (selected.includes(perm)) {
+      onChange(selected.filter((p) => p !== perm));
+    } else {
+      onChange([...selected, perm]);
+    }
+  };
+
+  const toggleGroup = (perms) => {
+    const allChecked = perms.every((p) => selected.includes(p));
+    if (allChecked) {
+      onChange(selected.filter((p) => !perms.includes(p)));
+    } else {
+      const merged = [...new Set([...selected, ...perms])];
+      onChange(merged);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      {PERMISSION_GROUPS.map((group) => {
+        const allChecked = group.perms.every((p) => selected.includes(p));
+        const someChecked = group.perms.some((p) => selected.includes(p));
+        return (
+          <div key={group.label} className="border border-slate-200 rounded-xl overflow-hidden">
+            {/* Group header */}
+            <label className="flex items-center gap-3 px-4 py-2.5 bg-slate-50 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={allChecked}
+                ref={(el) => { if (el) el.indeterminate = someChecked && !allChecked; }}
+                onChange={() => toggleGroup(group.perms)}
+                className="w-4 h-4 rounded border-slate-300 text-cyan-600 accent-cyan-600"
+              />
+              <span className="text-xs font-black uppercase tracking-wider text-slate-700">
+                {group.label}
+              </span>
+              <span className="ml-auto text-[10px] font-semibold text-slate-400">
+                {group.perms.filter((p) => selected.includes(p)).length}/{group.perms.length}
+              </span>
+            </label>
+            {/* Individual permissions */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 divide-x divide-y divide-slate-100 border-t border-slate-200">
+              {group.perms.map((perm) => (
+                <label
+                  key={perm}
+                  className={`flex items-center gap-2 px-3 py-2 cursor-pointer select-none hover:bg-cyan-50/60 transition-colors ${
+                    selected.includes(perm) ? "bg-cyan-50/40" : "bg-white"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(perm)}
+                    onChange={() => toggle(perm)}
+                    className="w-3.5 h-3.5 rounded border-slate-300 text-cyan-600 accent-cyan-600"
+                  />
+                  <span className="text-[11px] font-semibold text-slate-600 leading-tight">
+                    {perm.replace(/_/g, " ")}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ─── Staff Form Modal ─────────────────────────────────────────────────────────
 const StaffModal = ({ isOpen, onClose, onSave, initial }) => {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      setForm(
-        initial
-          ? {
-              ...EMPTY_FORM,
-              ...initial,
-              permissions: Array.isArray(initial.permissions)
-                ? initial.permissions.join(", ")
-                : initial.permissions || "",
-              emergencyContact: initial.emergencyContact || { name: "", relation: "", phone: "" },
-            }
-          : EMPTY_FORM
-      );
+    if (!isOpen) return;
+    if (initial) {
+      setForm({
+        ...EMPTY_FORM,
+        ...initial,
+        permissions: Array.isArray(initial.permissions) ? initial.permissions : [],
+        emergencyContact: initial.emergencyContact || { name: "", relation: "", phone: "" },
+      });
+    } else {
+      setForm(EMPTY_FORM);
     }
   }, [isOpen, initial]);
 
@@ -90,13 +203,7 @@ const StaffModal = ({ isOpen, onClose, onSave, initial }) => {
     e.preventDefault();
     try {
       setSaving(true);
-      const payload = {
-        ...form,
-        permissions: form.permissions
-          ? form.permissions.split(",").map((p) => p.trim()).filter(Boolean)
-          : [],
-      };
-      await onSave(payload);
+      await onSave(form);
       onClose();
     } catch (err) {
       const msg = err?.response?.data?.message || err?.message || "Something went wrong.";
@@ -106,114 +213,160 @@ const StaffModal = ({ isOpen, onClose, onSave, initial }) => {
     }
   };
 
+  const inputCls =
+    "w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 bg-white";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-white/80">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden border border-white/80">
+
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white">
+        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center shrink-0">
           <div>
             <h2 className="text-lg font-black text-slate-900">
               {initial ? "Edit Staff Member" : "Add Staff Member"}
             </h2>
-            <p className="text-[11px] font-medium text-slate-500">Fill in the staff details below</p>
+            <p className="text-[11px] font-medium text-slate-500">Fill in the details below</p>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form */}
-        <div className="overflow-y-auto px-6 py-5 space-y-5">
-          <form id="staff-form" onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Full Name *</label>
-                <input required value={form.fullName} onChange={(e) => set("fullName", e.target.value)} placeholder="e.g. Maya Kapoor" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Email *</label>
-                <input required type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="staff@clinic.com" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Phone Number *</label>
-                <input required value={form.phoneNumber} onChange={(e) => set("phoneNumber", e.target.value)} placeholder="+91 98765 00000" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Department *</label>
-                <input required value={form.department} onChange={(e) => set("department", e.target.value)} placeholder="e.g. Operations" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Employment Role *</label>
-                <select required value={form.employment} onChange={(e) => set("employment", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500">
-                  <option value="">Select role...</option>
-                  {EMPLOYMENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Employment Type</label>
-                <select value={form.employmentType} onChange={(e) => set("employmentType", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500">
-                  <option value="">Select type...</option>
-                  {EMPLOYMENT_MODES.map((t) => <option key={t} value={t}>{t.replace("_", " ")}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Designation</label>
-                <input value={form.designation} onChange={(e) => set("designation", e.target.value)} placeholder="e.g. Senior Dental Assistant" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Date of Joining</label>
-                <input type="date" value={form.dateOfJoining ? form.dateOfJoining.slice(0, 10) : ""} onChange={(e) => set("dateOfJoining", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 text-slate-600" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
-                <select value={form.status} onChange={(e) => set("status", e.target.value)} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500">
-                  {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">Permissions <span className="text-slate-400 font-normal">(comma-separated)</span></label>
-                <input value={form.permissions} onChange={(e) => set("permissions", e.target.value)} placeholder="Patients, Appointments, Reports" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+        {/* Scrollable body */}
+        <div className="overflow-y-auto px-6 py-5">
+          <form id="staff-form" onSubmit={handleSubmit} className="space-y-6">
+
+            {/* ── Personal Info ── */}
+            <div>
+              <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-100 pb-2">
+                Personal Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Full Name *</label>
+                  <input required value={form.fullName} onChange={(e) => set("fullName", e.target.value)} placeholder="e.g. Maya Kapoor" className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Email *</label>
+                  <input required type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="staff@clinic.com" className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Phone Number *</label>
+                  <input required value={form.phoneNumber} onChange={(e) => set("phoneNumber", e.target.value)} placeholder="+91 98765 00000" className={inputCls} />
+                </div>
               </div>
             </div>
 
-            {/* Emergency Contact */}
+            {/* ── Emergency Contact ── */}
             <div>
-              <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-100 pb-2">Emergency Contact</h3>
+              <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-100 pb-2">
+                Emergency Contact
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
-                  <input value={form.emergencyContact.name} onChange={(e) => setEC("name", e.target.value)} placeholder="Jane Doe" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+                  <input value={form.emergencyContact.name} onChange={(e) => setEC("name", e.target.value)} placeholder="Jane Doe" className={inputCls} />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Relation</label>
-                  <input value={form.emergencyContact.relation} onChange={(e) => setEC("relation", e.target.value)} placeholder="Spouse" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+                  <input value={form.emergencyContact.relation} onChange={(e) => setEC("relation", e.target.value)} placeholder="Spouse" className={inputCls} />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Phone</label>
-                  <input value={form.emergencyContact.phone} onChange={(e) => setEC("phone", e.target.value)} placeholder="+91 98765 00001" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500" />
+                  <input value={form.emergencyContact.phone} onChange={(e) => setEC("phone", e.target.value)} placeholder="+91 98765 00001" className={inputCls} />
                 </div>
               </div>
             </div>
+
+            {/* ── Employment ── */}
+            <div>
+              <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-100 pb-2">
+                Employment Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Employment Role *</label>
+                  <select required value={form.employment} onChange={(e) => set("employment", e.target.value)} className={inputCls}>
+                    <option value="">Select role...</option>
+                    {EMPLOYMENT_ROLES.map((r) => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Employment Type</label>
+                  <select value={form.employmentType} onChange={(e) => set("employmentType", e.target.value)} className={inputCls}>
+                    {EMPLOYMENT_TYPES.map((t) => (
+                      <option key={t} value={t}>{t.replace(/_/g, " ")}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Designation</label>
+                  <input value={form.designation} onChange={(e) => set("designation", e.target.value)} placeholder="e.g. Senior Dental Assistant" className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Department *</label>
+                  <input required value={form.department} onChange={(e) => set("department", e.target.value)} placeholder="e.g. Operations" className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Date of Joining</label>
+                  <input type="date" value={form.dateOfJoining ? form.dateOfJoining.slice(0, 10) : ""} onChange={(e) => set("dateOfJoining", e.target.value)} className={inputCls + " text-slate-600"} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                  <select value={form.status} onChange={(e) => set("status", e.target.value)} className={inputCls}>
+                    {STATUS_OPTIONS.map((s) => (
+                      <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Permissions ── */}
+            <div>
+              <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-1 border-b border-slate-100 pb-2">
+                Permissions
+              </h3>
+              <p className="text-[11px] text-slate-400 mb-3">
+                Select the modules this staff member can access.
+                {form.permissions.length > 0 && (
+                  <span className="ml-1 font-semibold text-cyan-600">{form.permissions.length} selected</span>
+                )}
+              </p>
+              <PermissionSelector
+                selected={form.permissions}
+                onChange={(perms) => set("permissions", perms)}
+              />
+            </div>
+
           </form>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 bg-white">
-          <button type="button" onClick={onClose} className="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">Cancel</button>
-          <button type="submit" form="staff-form" disabled={saving} className="px-5 py-2.5 bg-cyan-600 text-white rounded-xl text-sm font-bold hover:bg-cyan-700 disabled:opacity-70 transition-colors">
-            {saving ? "Saving..." : initial ? "Save Changes" : "Add Staff"}
-          </button>
+        <div className="px-6 py-4 border-t border-slate-200 flex justify-between items-center shrink-0 bg-white">
+          <p className="text-[11px] font-medium text-slate-500">Fields marked * are required</p>
+          <div className="flex gap-3">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
+              Cancel
+            </button>
+            <button type="submit" form="staff-form" disabled={saving} className="px-5 py-2.5 bg-cyan-600 text-white rounded-xl text-sm font-bold hover:bg-cyan-700 disabled:opacity-70 transition-colors">
+              {saving ? "Saving..." : initial ? "Save Changes" : "Add Staff"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-// ─── Main Staff Component ────────────────────────────────────────────────────
+// ─── Main Staff Page ──────────────────────────────────────────────────────────
 export const Staff = () => {
   const [staffList, setStaffList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [loading, setLoading]     = useState(true);
+  const [query, setQuery]         = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
@@ -257,7 +410,7 @@ export const Staff = () => {
     }
   };
 
-  const openAdd = () => { setEditTarget(null); setModalOpen(true); };
+  const openAdd  = () => { setEditTarget(null); setModalOpen(true); };
   const openEdit = (person) => { setEditTarget(person); setModalOpen(true); };
 
   const statuses = ["ALL", ...new Set(staffList.map((s) => s.status).filter(Boolean))];
@@ -265,18 +418,23 @@ export const Staff = () => {
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase();
     return staffList.filter((s) => {
-      const fields = [s.fullName, s.email, s.phoneNumber, s.employment, s.designation, s.department, s.employmentType, ...(s.permissions || [])];
-      const matchSearch = !term || fields.some((f) => f?.toLowerCase().includes(term));
-      const matchStatus = statusFilter === "ALL" || s.status === statusFilter;
+      const fields = [
+        s.fullName, s.email, s.phoneNumber,
+        s.employment, s.designation, s.department, s.employmentType,
+        ...(s.permissions || []),
+      ];
+      const matchSearch  = !term || fields.some((f) => f?.toLowerCase().includes(term));
+      const matchStatus  = statusFilter === "ALL" || s.status === statusFilter;
       return matchSearch && matchStatus;
     });
   }, [staffList, query, statusFilter]);
 
   const activeCount = staffList.filter((s) => s.status === "ACTIVE").length;
-  const adminCount = staffList.filter((s) => s.employment === "ADMIN").length;
+  const adminCount  = staffList.filter((s) => s.employment === "ADMIN").length;
 
   return (
     <div className="p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto space-y-4">
+
       {/* Header */}
       <section className="relative overflow-hidden bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-cyan-600">
         <div>
@@ -290,9 +448,9 @@ export const Staff = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        <Metric title="Team Members" value={loading ? "—" : staffList.length} caption="Total staff records" icon={UsersRound} color="text-cyan-600" />
-        <Metric title="Active Staff" value={loading ? "—" : activeCount} caption="Currently active" icon={UserCheck} color="text-emerald-600" />
-        <Metric title="Admin Roles" value={loading ? "—" : adminCount} caption="Administrative access" icon={ShieldCheck} color="text-violet-600" />
+        <Metric title="Team Members" value={loading ? "—" : staffList.length} caption="Total staff records"     icon={UsersRound}  color="text-cyan-600" />
+        <Metric title="Active Staff"  value={loading ? "—" : activeCount}      caption="Currently active"        icon={UserCheck}   color="text-emerald-600" />
+        <Metric title="Admin Roles"   value={loading ? "—" : adminCount}        caption="Administrative access"   icon={ShieldCheck} color="text-violet-600" />
       </div>
 
       {/* Table Card */}
@@ -304,7 +462,9 @@ export const Staff = () => {
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, role, department, permission..." className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm font-medium text-slate-700 outline-none shadow-xs focus:border-cyan-600 focus:ring-2 focus:ring-cyan-500/20" />
           </div>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-cyan-500/20">
-            {statuses.map((s) => <option key={s} value={s}>{s === "ALL" ? "All Statuses" : s.replace("_", " ")}</option>)}
+            {statuses.map((s) => (
+              <option key={s} value={s}>{s === "ALL" ? "All Statuses" : s.replace(/_/g, " ")}</option>
+            ))}
           </select>
         </div>
 
@@ -332,7 +492,9 @@ export const Staff = () => {
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="px-5 py-16 text-center text-sm font-medium text-slate-500">
-                      {staffList.length === 0 ? "No staff members found. Add your first staff member." : "No staff members match your search."}
+                      {staffList.length === 0
+                        ? "No staff members found. Add your first staff member."
+                        : "No staff members match your search."}
                     </td>
                   </tr>
                 ) : (
@@ -363,27 +525,36 @@ export const Staff = () => {
                             <KeyRound className="w-3 h-3" />{person.employment || "—"}
                           </span>
                           {person.employmentType && (
-                            <p className="text-[10px] text-slate-400 mt-1">{person.employmentType.replace("_", " ")}</p>
+                            <p className="text-[10px] text-slate-400 mt-1">{person.employmentType.replace(/_/g, " ")}</p>
                           )}
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex max-w-[220px] flex-wrap gap-1">
-                            {person.permissions?.length > 0
-                              ? person.permissions.map((perm) => (
-                                  <span key={perm} className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600">{perm}</span>
-                                ))
-                              : <span className="text-xs text-slate-400">—</span>}
+                            {person.permissions?.length > 0 ? (
+                              person.permissions.slice(0, 4).map((perm) => (
+                                <span key={perm} className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                  {perm.replace(/_/g, " ")}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-xs text-slate-400">—</span>
+                            )}
+                            {person.permissions?.length > 4 && (
+                              <span className="rounded-md border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-600">
+                                +{person.permissions.length - 4} more
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-5 py-4 text-sm font-semibold text-slate-600">{joinedDate}</td>
                         <td className="px-5 py-4">
                           <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyle[person.status] || "border-slate-200 bg-slate-100 text-slate-500"}`}>
-                            {person.status?.replace("_", " ") || "—"}
+                            {person.status?.replace(/_/g, " ") || "—"}
                           </span>
                         </td>
                         <td className="px-5 py-4 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => openEdit(person)} className="p-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors rounded-lg cursor-pointer">
+                            <button onClick={() => openEdit(person)} className="p-1.5 border border-slate-200 bg-white hover:bg-slate-100 transition-colors rounded-lg cursor-pointer">
                               <Edit className="w-4 h-4 text-cyan-600" />
                             </button>
                             <button onClick={() => handleDelete(person._id)} className="p-1.5 border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors rounded-lg cursor-pointer">
@@ -400,7 +571,7 @@ export const Staff = () => {
           </div>
         )}
 
-        {/* Footer */}
+        {/* Footer count */}
         {!loading && (
           <div className="p-3 sm:p-4 border-t border-slate-100 text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-50/50">
             Showing {filtered.length} of {staffList.length} staff members
@@ -408,7 +579,7 @@ export const Staff = () => {
         )}
       </section>
 
-      {/* Add / Edit Modal */}
+      {/* Modal */}
       <StaffModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -419,6 +590,7 @@ export const Staff = () => {
   );
 };
 
+// ─── Metric card ──────────────────────────────────────────────────────────────
 const Metric = ({ title, value, caption, icon: Icon, color }) => (
   <section className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-xs">
     <div className="flex items-center justify-between">
