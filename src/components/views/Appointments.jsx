@@ -1,11 +1,13 @@
 import React, { useContext, useState } from 'react';
-import { Search, ChevronDown, Clock, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, ChevronDown, Clock, CheckCircle2, ChevronRight, Eye, Edit, Trash2 } from 'lucide-react';
 import { AppointmentKpi } from './SharedKpis';
 import { ContextProvider } from '../../context/store';
 import AppointmentForm from '../AppointmentForm';
 import { DataPageSkeleton } from '../DataPageSkeleton';
 
 export const Appointments = () => {
+  const navigate = useNavigate();
   const { setIsEditClick, isEditClick, Appointments: AppointmentsData, Patients, Doctors, setSelectedPatientData, selectedPatientData, AppointmentDelete, loading } = useContext(ContextProvider)
   const [searchValue, setSearchValue] = useState('');
   const [doctorFilter, setDoctorFilter] = useState('ALL');
@@ -104,67 +106,48 @@ export const Appointments = () => {
                 className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs"
               />
             </div>
-            <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+            <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <select value={doctorFilter} onChange={(event) => setDoctorFilter(event.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 uppercase tracking-wider shadow-xs whitespace-nowrap outline-none focus:ring-2 focus:ring-indigo-500/20"><option value="ALL">All Doctors</option>{doctorOptions.map((doctor) => <option key={doctor._id || doctor.id} value={doctor._id || doctor.id}>{doctor.full_name || doctor.name}</option>)}</select>
               <select value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 uppercase tracking-wider shadow-xs whitespace-nowrap outline-none focus:ring-2 focus:ring-indigo-500/20"><option value="ALL">All Dates</option><option value="TODAY">Today</option><option value="UPCOMING">Upcoming</option><option value="PAST">Past</option></select>
               <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 uppercase tracking-wider shadow-xs whitespace-nowrap outline-none focus:ring-2 focus:ring-indigo-500/20"><option value="ALL">All Statuses</option>{appointmentStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select>
             </div>
           </div>
 
-          {/* 1. Mobile Card List (Visible only on mobile screens < 768px) */}
+          {/* 1. Mobile List (< 768px) - Clean List with Avatar, Patient Name, Subtitle & Chevron */}
           <div className="md:hidden divide-y divide-slate-100">
             {filteredAppointments.length > 0 ? (
-              filteredAppointments.map((apt) => (
-                <div key={apt._id || Math.random()} className="p-4 space-y-3 bg-white hover:bg-slate-50/50 transition-colors">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm">{getPatientName(apt.patient)}</h4>
-                      <p className="text-xs text-slate-500 font-medium">Dr. {getDoctorName(apt.doctor)}</p>
-                    </div>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
-                      apt.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
-                      apt.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                      'bg-amber-100 text-amber-700'
-                    }`}>
-                      {apt.status || 'Scheduled'}
-                    </span>
-                  </div>
+              filteredAppointments.map((apt) => {
+                const patName = getPatientName(apt.patient);
+                const docName = getDoctorName(apt.doctor);
+                const initials = patName ? patName.substring(0, 2).toUpperCase() : "AP";
+                const dateStr = apt.date ? new Date(apt.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+                const timeStr = apt.start_time || apt.starttime || '';
 
-                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
-                    <div>
-                      <span className="text-slate-400 font-medium block text-[10px] uppercase">Date & Time</span>
-                      <span className="font-semibold text-slate-700">
-                        {apt.date ? new Date(apt.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'N/A'} • {apt.start_time || apt.starttime || 'N/A'}
-                      </span>
+                return (
+                  <div
+                    key={apt._id || Math.random()}
+                    onClick={() => navigate(`/appointments/${apt._id || apt.id}`, { state: { appointment: apt } })}
+                    className="p-3.5 sm:p-4 flex items-center justify-between gap-3 bg-white hover:bg-slate-50 active:bg-indigo-50/40 transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-slate-900 text-sm capitalize truncate group-hover:text-indigo-600 transition-colors">
+                          {patName}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                          Dr. {docName} {dateStr && `• ${dateStr}`} {timeStr && `• ${timeStr}`}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-slate-400 font-medium block text-[10px] uppercase">Service</span>
-                      <span className="font-semibold text-indigo-600 truncate block">
-                        {apt.service || apt.visit_type || 'Consultation'}
-                      </span>
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-all shrink-0">
+                      <ChevronRight className="w-5 h-5" />
                     </div>
                   </div>
-
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                    <button 
-                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                      onClick={() => { setIsEditClick(true); setSelectedPatientData(apt); }}
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                      onClick={() => {
-                        if (window.confirm("Are you sure you want to delete this appointment?")) {
-                          AppointmentDelete(apt._id);
-                        }
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="py-16 text-center p-4">
                 <Clock className="w-8 h-8 text-slate-400 mx-auto mb-2" />
@@ -197,46 +180,76 @@ export const Appointments = () => {
               </thead>
               <tbody>
                 {filteredAppointments.length > 0 ? (
-                  filteredAppointments.map((apt) => (
-                    <tr key={apt._id || Math.random()} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
-                      <td className="py-4 px-6"><input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/20" /></td>
-                      <td className="py-4 px-2 font-bold text-slate-800">{getPatientName(apt.patient)}</td>
-                      <td className="py-4 px-2 text-sm font-medium text-slate-600">
-                        {apt.date ? new Date(apt.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-                      </td>
-                      <td className="py-4 px-2 text-sm font-medium text-slate-600">
-                        {apt.start_time || apt.starttime || 'N/A'} {(apt.end_time || apt.endtime) ? `- ${apt.end_time || apt.endtime}` : ''}
-                      </td>
-                      <td className="py-4 px-2 font-bold text-slate-800">Dr. {getDoctorName(apt.doctor)}</td>
-                      <td className="py-4 px-2">
-                        <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
-                          {apt.service || apt.visit_type || 'Consultation'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${apt.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
-                            apt.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                              'bg-amber-100 text-amber-700'
-                          }`}>
-                          {apt.status || 'Scheduled'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-right flex justify-end gap-2 opacity-100">
-                        <button className="text-indigo-600 hover:text-indigo-900 text-sm font-bold bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer" onClick={() => {setIsEditClick(true); setSelectedPatientData(apt);}}>
-                          Edit
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (window.confirm("Are you sure you want to delete this appointment?")) {
-                              AppointmentDelete(apt._id);
-                            }
-                          }}
-                          className="text-white ml-2 hover:text-white text-sm font-bold bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                  filteredAppointments.map((apt) => {
+                    const patName = getPatientName(apt.patient);
+                    const initials = patName ? patName.substring(0, 2).toUpperCase() : 'AP';
+
+                    return (
+                      <tr key={apt._id || Math.random()} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                        <td className="py-4 px-6"><input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500/20" /></td>
+                        <td className="py-4 px-2">
+                          <div 
+                            className="flex items-center gap-2.5 cursor-pointer group/item"
+                            onClick={() => navigate(`/appointments/${apt._id || apt.id}`, { state: { appointment: apt } })}
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0">
+                              {initials}
+                            </div>
+                            <span className="font-bold text-slate-800 group-hover/item:text-indigo-600 transition-colors capitalize">{patName}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-2 text-sm font-medium text-slate-600">
+                          {apt.date ? new Date(apt.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                        </td>
+                        <td className="py-4 px-2 text-sm font-medium text-slate-600">
+                          {apt.start_time || apt.starttime || 'N/A'} {(apt.end_time || apt.endtime) ? `- ${apt.end_time || apt.endtime}` : ''}
+                        </td>
+                        <td className="py-4 px-2 font-bold text-slate-800">Dr. {getDoctorName(apt.doctor)}</td>
+                        <td className="py-4 px-2">
+                          <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
+                            {apt.service || apt.visit_type || 'Consultation'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${apt.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
+                              apt.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                                'bg-amber-100 text-amber-700'
+                            }`}>
+                            {apt.status || 'Scheduled'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-100">
+                            <button 
+                              className="p-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors rounded-lg cursor-pointer"
+                              title="View Appointment Details"
+                              onClick={() => navigate(`/appointments/${apt._id || apt.id}`, { state: { appointment: apt } })}
+                            >
+                              <Eye className="w-4 h-4 text-indigo-600" />
+                            </button>
+                            <button 
+                              className="p-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors rounded-lg cursor-pointer"
+                              title="Edit Appointment"
+                              onClick={() => { setIsEditClick(true); setSelectedPatientData(apt); }}
+                            >
+                              <Edit className="w-4 h-4 text-indigo-600" />
+                            </button>
+                            <button 
+                              className="p-1.5 border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors rounded-lg cursor-pointer"
+                              title="Delete Appointment"
+                              onClick={() => {
+                                if (window.confirm("Are you sure you want to delete this appointment?")) {
+                                  AppointmentDelete(apt._id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan="8" className="py-24 text-center">
@@ -259,9 +272,8 @@ export const Appointments = () => {
         </div>
 
         {isEditClick && <AppointmentForm />}
-
       </div>
     </>
   );
 };
-
+export default Appointments;

@@ -1,17 +1,21 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Search, ChevronDown, ChevronLeft, ChevronRight, Edit, Trash2, Stethoscope, UserCheck, Activity, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, ChevronDown, ChevronLeft, ChevronRight, Edit, Trash2, Stethoscope, UserCheck, Activity, Clock, Eye } from 'lucide-react';
 import { PatientKpi } from './SharedKpis';
 import { ContextProvider } from '../../context/store';
 import { DataPageSkeleton } from '../DataPageSkeleton';
 
 export const Doctors = ({ onAddDoctor }) => {
-  const { Doctors, setIsEditClick, setSelectedPatientData, DoctorDelete, loading } = useContext(ContextProvider)
+  const navigate = useNavigate();
+  const { Doctors, setIsEditClick, setSelectedPatientData, DoctorDelete, loading } = useContext(ContextProvider);
   const [searchValue, setSearchValue] = useState("");
   const [specializationFilter, setSpecializationFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  useEffect(()=>{
-    console.log('doctors',Doctors);
-  },[Doctors])
+
+  useEffect(() => {
+    console.log('doctors', Doctors);
+  }, [Doctors]);
+
   if (loading?.doctors) return <DataPageSkeleton />;
   
   const doctorsList = Array.isArray(Doctors?.data) ? Doctors.data : Array.isArray(Doctors) ? Doctors : [];
@@ -35,7 +39,6 @@ export const Doctors = ({ onAddDoctor }) => {
     ? Math.round(doctorsWithExperience.reduce((total, doctor) => total + Number(doctor.experience_years), 0) / doctorsWithExperience.length)
     : '—';
   const filteredDoctors = doctorsList.filter((d) => {
-    
     const searchLower = searchValue.toLowerCase();
     const nameMatch = d?.full_name?.toLowerCase()?.includes(searchLower);
     const specMatch = d?.specialization?.toLowerCase()?.includes(searchLower);
@@ -64,7 +67,7 @@ export const Doctors = ({ onAddDoctor }) => {
         </button>
       </div>
 
-      {/* KPI Cards (2-cols on mobile, 4-cols on desktop) */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <PatientKpi title="Total Doctors" value={doctorsList.length} subtext="Registered staff" icon={Stethoscope} />
         <PatientKpi title="Active Doctors" value={activeDoctors.length} subtext="Current active status" icon={UserCheck} />
@@ -100,61 +103,28 @@ export const Doctors = ({ onAddDoctor }) => {
           </div>
         </div>
 
-        {/* 1. Mobile Card List (Visible only on mobile screens < 768px) */}
+        {/* 1. Mobile List (< 768px) - Clean List with Name & Chevron */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredDoctors && filteredDoctors.length > 0 ? (
             filteredDoctors.map((item) => {
               const initials = item?.full_name ? item.full_name.substring(0, 2).toUpperCase() : "DR";
 
               return (
-                <div key={item._id || Math.random()} className="p-4 space-y-3 bg-white hover:bg-slate-50/50 transition-colors">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
-                        {initials}
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-slate-900 text-sm capitalize truncate">Dr. {item?.full_name}</h4>
-                        <p className="text-xs text-slate-500 font-medium truncate">{item?.phone || "No phone"}</p>
-                      </div>
+                <div
+                  key={item._id || Math.random()}
+                  onClick={() => navigate(`/doctors/${item._id || item.id}`, { state: { doctor: item } })}
+                  className="p-3.5 sm:p-4 flex items-center justify-between gap-3 bg-white hover:bg-slate-50 active:bg-indigo-50/40 transition-colors cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                      {initials}
                     </div>
-                    {item?.status === 'Active' ? (
-                      <span className="status-badge active shrink-0">{item.status}</span>
-                    ) : (
-                      <span className="status-badge pending shrink-0">{item?.status || "Unknown"}</span>
-                    )}
+                    <h4 className="font-bold text-slate-900 text-sm capitalize truncate group-hover:text-indigo-600 transition-colors">
+                      Dr. {item?.full_name}
+                    </h4>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
-                    <div>
-                      <span className="text-slate-400 font-medium block text-[10px] uppercase">Specialization</span>
-                      <span className="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md inline-block text-[11px] mt-0.5">
-                        {item?.specialization || "General"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 font-medium block text-[10px] uppercase">Experience</span>
-                      <span className="font-semibold text-slate-700">{item?.experience_years ? `${item.experience_years} yrs` : "N/A"}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                    <button 
-                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                      onClick={() => { setIsEditClick(true); setSelectedPatientData(item); if (onAddDoctor) onAddDoctor(); }}
-                    >
-                      <Edit className="w-3.5 h-3.5 text-indigo-600" /> Edit
-                    </button>
-                    <button 
-                      className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                      onClick={() => {
-                        if (window.confirm("Are you sure you want to delete this doctor?")) {
-                          DoctorDelete(item._id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
-                    </button>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-all shrink-0">
+                    <ChevronRight className="w-5 h-5" />
                   </div>
                 </div>
               );
@@ -167,7 +137,7 @@ export const Doctors = ({ onAddDoctor }) => {
           )}
         </div>
 
-        {/* 2. Desktop Table (Hidden on mobile < 768px, visible on md+) */}
+        {/* 2. Desktop Table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse saas-table">
             <thead>
@@ -189,7 +159,10 @@ export const Doctors = ({ onAddDoctor }) => {
                   <tr key={item._id || Math.random()} className="group">
                     <td><input type="checkbox" className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20" /></td>
                     <td>
-                      <div className="flex items-center gap-3">
+                      <div 
+                        className="flex items-center gap-3 cursor-pointer"
+                        onClick={() => navigate(`/doctors/${item._id || item.id}`, { state: { doctor: item } })}
+                      >
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
                           {initials}
                         </div>
@@ -206,7 +179,7 @@ export const Doctors = ({ onAddDoctor }) => {
                       <span className="font-semibold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-lg text-xs">{item?.specialization}</span>
                     </td>
                     <td>
-                      <span className="font-semibold text-slate-700">{item?.experience_years}</span>
+                      <span className="font-semibold text-slate-700">{item?.experience_years ? `${item.experience_years} yrs` : '—'}</span>
                     </td>
                     <td>
                       {item?.status === 'Active' ? (
@@ -219,11 +192,20 @@ export const Doctors = ({ onAddDoctor }) => {
                       <div className="flex items-center justify-end gap-2 opacity-100">
                         <button 
                           className="p-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors rounded-lg cursor-pointer"
+                          title="View Doctor Details"
+                          onClick={() => navigate(`/doctors/${item._id || item.id}`, { state: { doctor: item } })}
+                        >
+                          <Eye className="w-4 h-4 text-indigo-600" />
+                        </button>
+                        <button 
+                          className="p-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors rounded-lg cursor-pointer"
+                          title="Edit Doctor"
                           onClick={() => { setIsEditClick(true); setSelectedPatientData(item); if (onAddDoctor) onAddDoctor(); }}>
                           <Edit className="w-4 h-4 text-indigo-600" />
                         </button>
                         <button 
                           className="p-1.5 border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors rounded-lg cursor-pointer"
+                          title="Delete Doctor"
                           onClick={() => {
                             if (window.confirm("Are you sure you want to delete this doctor?")) {
                               DoctorDelete(item._id);
@@ -276,3 +258,4 @@ export const Doctors = ({ onAddDoctor }) => {
     </div>
   );
 };
+export default Doctors;

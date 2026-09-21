@@ -1,6 +1,9 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
+  ChevronRight,
   Edit,
+  Eye,
   KeyRound,
   Loader2,
   Plus,
@@ -217,18 +220,22 @@ const StaffModal = ({ isOpen, onClose, onSave, initial }) => {
     "w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 bg-white";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden border border-white/80">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-xs transition-all animate-[fadeIn_0.2s_ease-out]">
+      <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-3xl max-h-[88vh] sm:max-h-[92vh] flex flex-col overflow-hidden border-t sm:border border-slate-200/90 animate-slide-up sm:animate-[fadeIn_0.2s_ease-out]">
+        {/* Mobile Drag Indicator */}
+        <div className="sm:hidden pt-2.5 pb-1 flex justify-center shrink-0">
+          <div className="w-12 h-1.5 bg-slate-300 rounded-full" />
+        </div>
 
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center shrink-0">
+        <div className="px-5 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 flex justify-between items-center shrink-0 bg-white">
           <div>
-            <h2 className="text-lg font-black text-slate-900">
+            <h2 className="text-base sm:text-lg font-black text-slate-900">
               {initial ? "Edit Staff Member" : "Add Staff Member"}
             </h2>
             <p className="text-[11px] font-medium text-slate-500">Fill in the details below</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -346,13 +353,22 @@ const StaffModal = ({ isOpen, onClose, onSave, initial }) => {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 flex justify-between items-center shrink-0 bg-white">
-          <p className="text-[11px] font-medium text-slate-500">Fields marked * are required</p>
-          <div className="flex gap-3">
-            <button type="button" onClick={onClose} className="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
+        <div className="px-5 sm:px-6 py-3.5 sm:py-4 border-t border-slate-200 flex justify-between items-center gap-3 shrink-0 bg-white">
+          <p className="hidden sm:block text-[11px] font-medium text-slate-500">Fields marked * are required</p>
+          <div className="flex items-center gap-2.5 w-full sm:w-auto sm:ml-auto">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-1/2 sm:w-auto px-4 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs sm:text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer text-center"
+            >
               Cancel
             </button>
-            <button type="submit" form="staff-form" disabled={saving} className="px-5 py-2.5 bg-cyan-600 text-white rounded-xl text-sm font-bold hover:bg-cyan-700 disabled:opacity-70 transition-colors">
+            <button
+              type="submit"
+              form="staff-form"
+              disabled={saving}
+              className="w-1/2 sm:w-auto px-5 py-2.5 bg-cyan-600 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-cyan-700 disabled:opacity-70 transition-colors shadow-xs shadow-cyan-600/20 cursor-pointer text-center"
+            >
               {saving ? "Saving..." : initial ? "Save Changes" : "Add Staff"}
             </button>
           </div>
@@ -364,6 +380,7 @@ const StaffModal = ({ isOpen, onClose, onSave, initial }) => {
 
 // ─── Main Staff Page ──────────────────────────────────────────────────────────
 export const Staff = () => {
+  const navigate = useNavigate();
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [query, setQuery]         = useState("");
@@ -475,100 +492,149 @@ export const Staff = () => {
             <span className="text-sm font-medium">Loading staff...</span>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left">
-              <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-500">
-                <tr>
-                  <th className="px-5 py-3.5">Staff Member</th>
-                  <th className="px-5 py-3.5">Department</th>
-                  <th className="px-5 py-3.5">Role / Type</th>
-                  <th className="px-5 py-3.5">Permissions</th>
-                  <th className="px-5 py-3.5">Date Joined</th>
-                  <th className="px-5 py-3.5">Status</th>
-                  <th className="px-5 py-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filtered.length === 0 ? (
+          <>
+            {/* 1. Mobile List (< 768px) - Clean List with Name & Chevron */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filtered.length === 0 ? (
+                <div className="p-8 text-center text-sm font-medium text-slate-500">
+                  {staffList.length === 0
+                    ? "No staff members found. Add your first staff member."
+                    : "No staff members match your search."}
+                </div>
+              ) : (
+                filtered.map((person) => {
+                  const initials = person.fullName
+                    ? person.fullName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase()
+                    : "?";
+                  return (
+                    <div
+                      key={person._id}
+                      onClick={() => navigate(`/staff/${person._id}`, { state: { staff: person } })}
+                      className="p-3.5 sm:p-4 flex items-center justify-between gap-3 bg-white hover:bg-slate-50 active:bg-cyan-50/40 transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-100 text-xs font-black text-cyan-800 shrink-0 group-hover:scale-105 transition-transform">
+                          {initials}
+                        </div>
+                        <h4 className="font-bold text-slate-900 text-sm truncate group-hover:text-cyan-600 transition-colors">
+                          {person.fullName}
+                        </h4>
+                      </div>
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 group-hover:text-cyan-600 group-hover:bg-cyan-50 transition-all shrink-0">
+                        <ChevronRight className="w-5 h-5" />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* 2. Desktop Table (md+) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full min-w-[900px] text-left">
+                <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-500">
                   <tr>
-                    <td colSpan="7" className="px-5 py-16 text-center text-sm font-medium text-slate-500">
-                      {staffList.length === 0
-                        ? "No staff members found. Add your first staff member."
-                        : "No staff members match your search."}
-                    </td>
+                    <th className="px-5 py-3.5">Staff Member</th>
+                    <th className="px-5 py-3.5">Department</th>
+                    <th className="px-5 py-3.5">Role / Type</th>
+                    <th className="px-5 py-3.5">Permissions</th>
+                    <th className="px-5 py-3.5">Date Joined</th>
+                    <th className="px-5 py-3.5">Status</th>
+                    <th className="px-5 py-3.5 text-right">Actions</th>
                   </tr>
-                ) : (
-                  filtered.map((person) => {
-                    const initials = person.fullName
-                      ? person.fullName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase()
-                      : "?";
-                    const joinedDate = person.dateOfJoining
-                      ? new Date(person.dateOfJoining).toLocaleDateString()
-                      : "—";
-                    return (
-                      <tr key={person._id} className="hover:bg-cyan-50/30 transition-colors">
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-100 text-xs font-black text-cyan-800 shrink-0">{initials}</div>
-                            <div>
-                              <p className="font-bold text-slate-900">{person.fullName}</p>
-                              <p className="text-xs font-medium text-slate-500">{person.designation || "—"}</p>
-                              <p className="text-[11px] text-slate-400">{person.email}</p>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="px-5 py-16 text-center text-sm font-medium text-slate-500">
+                        {staffList.length === 0
+                          ? "No staff members found. Add your first staff member."
+                          : "No staff members match your search."}
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((person) => {
+                      const initials = person.fullName
+                        ? person.fullName.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase()
+                        : "?";
+                      const joinedDate = person.dateOfJoining
+                        ? new Date(person.dateOfJoining).toLocaleDateString()
+                        : "—";
+                      return (
+                        <tr key={person._id} className="hover:bg-cyan-50/30 transition-colors">
+                          <td className="px-5 py-4">
+                            <div 
+                              className="flex items-center gap-3 cursor-pointer"
+                              onClick={() => navigate(`/staff/${person._id}`, { state: { staff: person } })}
+                            >
+                              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-100 text-xs font-black text-cyan-800 shrink-0">{initials}</div>
+                              <div>
+                                <p className="font-bold text-slate-900 hover:text-cyan-600 transition-colors">{person.fullName}</p>
+                                <p className="text-xs font-medium text-slate-500">{person.designation || "—"}</p>
+                                <p className="text-[11px] text-slate-400">{person.email}</p>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4">
-                          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">{person.department || "—"}</span>
-                        </td>
-                        <td className="px-5 py-4">
-                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${employmentStyle[person.employment] || "border-slate-200 bg-slate-100 text-slate-700"}`}>
-                            <KeyRound className="w-3 h-3" />{person.employment || "—"}
-                          </span>
-                          {person.employmentType && (
-                            <p className="text-[10px] text-slate-400 mt-1">{person.employmentType.replace(/_/g, " ")}</p>
-                          )}
-                        </td>
-                        <td className="px-5 py-4">
-                          <div className="flex max-w-[220px] flex-wrap gap-1">
-                            {person.permissions?.length > 0 ? (
-                              person.permissions.slice(0, 4).map((perm) => (
-                                <span key={perm} className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                                  {perm.replace(/_/g, " ")}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">{person.department || "—"}</span>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${employmentStyle[person.employment] || "border-slate-200 bg-slate-100 text-slate-700"}`}>
+                              <KeyRound className="w-3 h-3" />{person.employment || "—"}
+                            </span>
+                            {person.employmentType && (
+                              <p className="text-[10px] text-slate-400 mt-1">{person.employmentType.replace(/_/g, " ")}</p>
+                            )}
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex max-w-[220px] flex-wrap gap-1">
+                              {person.permissions?.length > 0 ? (
+                                person.permissions.slice(0, 4).map((perm) => (
+                                  <span key={perm} className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                    {perm.replace(/_/g, " ")}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-xs text-slate-400">—</span>
+                              )}
+                              {person.permissions?.length > 4 && (
+                                <span className="rounded-md border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-600">
+                                  +{person.permissions.length - 4} more
                                 </span>
-                              ))
-                            ) : (
-                              <span className="text-xs text-slate-400">—</span>
-                            )}
-                            {person.permissions?.length > 4 && (
-                              <span className="rounded-md border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-600">
-                                +{person.permissions.length - 4} more
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 text-sm font-semibold text-slate-600">{joinedDate}</td>
-                        <td className="px-5 py-4">
-                          <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyle[person.status] || "border-slate-200 bg-slate-100 text-slate-500"}`}>
-                            {person.status?.replace(/_/g, " ") || "—"}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <button onClick={() => openEdit(person)} className="p-1.5 border border-slate-200 bg-white hover:bg-slate-100 transition-colors rounded-lg cursor-pointer">
-                              <Edit className="w-4 h-4 text-cyan-600" />
-                            </button>
-                            <button onClick={() => handleDelete(person._id)} className="p-1.5 border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors rounded-lg cursor-pointer">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 text-sm font-semibold text-slate-600">{joinedDate}</td>
+                          <td className="px-5 py-4">
+                            <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyle[person.status] || "border-slate-200 bg-slate-100 text-slate-500"}`}>
+                              {person.status?.replace(/_/g, " ") || "—"}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => navigate(`/staff/${person._id}`, { state: { staff: person } })}
+                                title="View Staff Details"
+                                className="p-1.5 border border-slate-200 bg-white hover:bg-slate-100 transition-colors rounded-lg cursor-pointer"
+                              >
+                                <Eye className="w-4 h-4 text-cyan-600" />
+                              </button>
+                              <button onClick={() => openEdit(person)} title="Edit Staff" className="p-1.5 border border-slate-200 bg-white hover:bg-slate-100 transition-colors rounded-lg cursor-pointer">
+                                <Edit className="w-4 h-4 text-cyan-600" />
+                              </button>
+                              <button onClick={() => handleDelete(person._id)} title="Delete Staff" className="p-1.5 border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors rounded-lg cursor-pointer">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Footer count */}

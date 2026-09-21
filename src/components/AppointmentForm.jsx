@@ -1,12 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
 import { ContextProvider } from "../context/store";
 import { X, Calendar, Clock, User, Stethoscope } from 'lucide-react';
-import { updateAppointment } from "../services/appointments";
 
 function AppointmentForm({ setClick, isFollowUp = false }) {
     const { Patients, Doctors, setIsEditClick, AppointmentCreate, selectedPatientData, AppointmentUpdate } = useContext(ContextProvider);
     const [isLoading, setIsLoading] = useState(false);
-
 
     const [formData, setFormData] = useState({
         patient: "",
@@ -33,9 +31,9 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
             setIsLoading(true);
             const response = selectedPatientData ? await AppointmentUpdate(formData, selectedPatientData?._id) : await AppointmentCreate(formData);
             setIsEditClick(false);
+            if (setClick) setClick(false);
         } catch (error) {
             console.error('Failed to create appointment:', error);
-            // Error handling can be added here
         } finally {
             setIsLoading(false);
         }
@@ -43,22 +41,20 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
 
     const onClose = () => {
         setIsEditClick(false);
-        setClick(false);
-    }
+        if (setClick) setClick(false);
+    };
+
     useEffect(() => {
         if (selectedPatientData) {
-            // Helper to ensure time is HH:mm format
             const formatTime = (timeStr) => {
                 if (!timeStr) return "";
-                // If it's already HH:mm, return it
                 if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr;
-                // If it has seconds (HH:mm:ss), truncate it
                 if (/^\d{2}:\d{2}:\d{2}/.test(timeStr)) return timeStr.substring(0, 5);
                 return timeStr;
             };
 
             setFormData({
-                patient: selectedPatientData.patient || "",
+                patient: selectedPatientData.patient?._id || selectedPatientData.patient || "",
                 doctor: selectedPatientData.doctor?._id || selectedPatientData.doctor || "",
                 date: selectedPatientData.date ? selectedPatientData.date.split('T')[0] : "",
                 start_time: formatTime(selectedPatientData.start_time || selectedPatientData.starttime),
@@ -72,22 +68,27 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
     }, [selectedPatientData]);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]">
-            <div className="bg-white/90 backdrop-blur-xl border border-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-xs transition-all animate-[fadeIn_0.2s_ease-out]">
+            <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-2xl overflow-hidden flex flex-col max-h-[88vh] sm:max-h-[90vh] border-t sm:border border-slate-200/90 animate-slide-up sm:animate-[fadeIn_0.2s_ease-out]">
+                
+                {/* Mobile Bottom Sheet Grab Indicator */}
+                <div className="sm:hidden pt-2.5 pb-1 flex justify-center shrink-0">
+                    <div className="w-12 h-1.5 bg-slate-300 rounded-full" />
+                </div>
 
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white/50">
-                    <h2 className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+                <div className="px-5 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+                    <h2 className="text-lg sm:text-xl font-extrabold text-slate-800 flex items-center gap-2">
                         <Calendar className="w-5 h-5 text-indigo-600" />
                         {selectedPatientData ? 'Edit Appointment' : isFollowUp ? 'Add New Follow-Up' : 'Book Appointment'}
                     </h2>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all">
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all cursor-pointer">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Form Body */}
-                <div className="p-6 overflow-y-auto">
+                <div className="p-5 sm:p-6 overflow-y-auto flex-1 overscroll-contain">
                     <form id="appointment-form" onSubmit={handleSubmit} className="space-y-6">
 
                         {/* Participants */}
@@ -104,7 +105,7 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
                                         value={formData.patient}
                                         onChange={handleChange}
                                         required
-                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm text-slate-700"
+                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm text-slate-700 bg-white"
                                     >
                                         <option value="">Select Patient</option>
                                         {(Array.isArray(Patients?.data) ? Patients.data : Array.isArray(Patients) ? Patients : []).map((p) => (
@@ -121,7 +122,7 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
                                         value={formData.doctor}
                                         onChange={handleChange}
                                         required
-                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm text-slate-700"
+                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm text-slate-700 bg-white"
                                     >
                                         <option value="">Select Doctor</option>
                                         {(Array.isArray(Doctors?.data) ? Doctors.data : Array.isArray(Doctors) ? Doctors : []).map((d) => (
@@ -149,7 +150,7 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
                                         value={formData.date}
                                         onChange={handleChange}
                                         required
-                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm bg-white"
                                     />
                                 </div>
                                 <div>
@@ -160,7 +161,7 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
                                         value={formData.start_time}
                                         onChange={handleChange}
                                         required
-                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm bg-white"
                                     />
                                 </div>
                                 <div>
@@ -170,7 +171,7 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
                                         name="end_time"
                                         value={formData.end_time}
                                         onChange={handleChange}
-                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm bg-white"
                                     />
                                 </div>
                             </div>
@@ -190,7 +191,7 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
                                         value={formData.visit_type}
                                         onChange={handleChange}
                                         required
-                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm text-slate-700"
+                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm text-slate-700 bg-white"
                                     >
                                         <option value="">Select Option</option>
                                         <option value="Consultation">Consultation</option>
@@ -208,7 +209,7 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
                                         value={formData.service}
                                         onChange={handleChange}
                                         placeholder="e.g. Dental Cleaning"
-                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm bg-white"
                                     />
                                 </div>
                                 <div className="md:col-span-2">
@@ -219,7 +220,7 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
                                         onChange={handleChange}
                                         placeholder="Briefly describe the reason for the visit..."
                                         rows="2"
-                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm resize-none"
+                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm resize-none bg-white"
                                     ></textarea>
                                 </div>
                                 <div>
@@ -228,7 +229,7 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
                                         name="status"
                                         value={formData.status}
                                         onChange={handleChange}
-                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm text-slate-700"
+                                        className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm text-slate-700 bg-white"
                                     >
                                         <option value="Scheduled">Scheduled</option>
                                         <option value="Completed">Completed</option>
@@ -243,12 +244,22 @@ function AppointmentForm({ setClick, isFollowUp = false }) {
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
-                    <button type="button" onClick={onClose} className="px-5 py-2.5 bg-white border border-slate-200/80 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 shadow-sm transition-colors">
+                <div className="px-5 sm:px-6 py-3.5 sm:py-4 border-t border-slate-100 flex items-center justify-end gap-2.5 sm:gap-3 bg-slate-50/80 shrink-0">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="w-1/2 sm:w-auto px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-bold hover:bg-slate-50 transition-colors shadow-xs cursor-pointer text-center"
+                    >
                         Cancel
                     </button>
-                    <button type="submit" form="appointment-form" disabled={isLoading} className="premium-button px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 disabled:opacity-70">
-                        {isLoading ? 'Saving...' : (selectedPatientData ? 'Edit Appointment' : isFollowUp ? 'Add Follow-Up' : 'Add Appointment')}                    </button>
+                    <button
+                        type="submit"
+                        form="appointment-form"
+                        disabled={isLoading}
+                        className="w-1/2 sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-xs shadow-indigo-600/20 disabled:opacity-70 cursor-pointer text-center transition-all"
+                    >
+                        {isLoading ? 'Saving...' : (selectedPatientData ? 'Edit Appointment' : isFollowUp ? 'Add Follow-Up' : 'Add Appointment')}
+                    </button>
                 </div>
             </div>
         </div>

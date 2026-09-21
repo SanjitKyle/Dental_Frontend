@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -21,6 +21,10 @@ import Register from "./components/register";
 import StoreManagement from "./context/store";
 import FollowUp from "./components/views/follow-ip";
 import { Staff } from "./components/views/Staff";
+import { DoctorDetail } from "./components/views/DoctorDetail";
+import { PatientDetail } from "./components/views/PatientDetail";
+import { StaffDetail } from "./components/views/StaffDetail";
+import { AppointmentDetail } from "./components/views/AppointmentDetail";
 import { Enquiries } from "./components/views/Enquiries";
 import Unauthorized from "./components/views/Unauthorized";
 import MobileBottomNav from "./components/MobileBottomNav";
@@ -50,6 +54,7 @@ const MainLayout = ({ isPatientModalOpen, closePatientModal, isDoctorModalOpen, 
         <Sidebar
           isMobileOpen={isMobileSidebarOpen}
           onCloseMobile={() => setIsMobileSidebarOpen(false)}
+          onLogout={onLogout}
         />
 
         <main className="flex-1 overflow-y-auto w-full relative pb-20 md:pb-6">
@@ -158,12 +163,15 @@ function App() {
               {/* Patients: Admin, Doctor, Staff */}
               <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF]} />}>
                 <Route path="/patients" element={<Patients onAddPatient={openPatientModal} />} />
+                <Route path="/patients/:id" element={<PatientDetail onEditPatient={openPatientModal} />} />
               </Route>
 
               {/* Admin-Only Management Modules */}
               <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
                 <Route path="/doctors" element={<Doctors onAddDoctor={openDoctorModal} />} />
+                <Route path="/doctors/:id" element={<DoctorDetail onEditDoctor={openDoctorModal} />} />
                 <Route path="/staff" element={<Staff />} />
+                <Route path="/staff/:id" element={<StaffDetail />} />
                 <Route path="/settings" element={<EmptyView title="Settings" />} />
                 <Route path="/website" element={<EmptyView title="Website Management" />} />
               </Route>
@@ -171,6 +179,7 @@ function App() {
               {/* Appointments: All authenticated users */}
               <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT]} />}>
                 <Route path="/appointments" element={<Appointments />} />
+                <Route path="/appointments/:id" element={<AppointmentDetail />} />
               </Route>
 
               {/* Odontograms: Admin, Doctor, Staff */}

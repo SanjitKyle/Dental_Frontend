@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Role-Based Access Control (RBAC) definitions and helpers.
  * Supported core roles: 'admin', 'doctor', 'staff', 'patient'
  */
@@ -81,8 +81,6 @@ export const ROUTE_PERMISSIONS = {
   '/staff': [ROLES.ADMIN],
   '/billing': [ROLES.ADMIN, ROLES.STAFF],
   '/test-reports': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
-  '/settings': [ROLES.ADMIN],
-  '/website': [ROLES.ADMIN],
 };
 
 /**
@@ -90,7 +88,8 @@ export const ROUTE_PERMISSIONS = {
  */
 export const canAccessRoute = (path, role) => {
   const currentRole = role || getUserRole();
-  const allowed = ROUTE_PERMISSIONS[path];
+  const basePath = '/' + (path.split('/')[1] || '');
+  const allowed = ROUTE_PERMISSIONS[path] || ROUTE_PERMISSIONS[basePath];
   if (!allowed) return true;
   return isRoleAllowed(currentRole, allowed);
 };

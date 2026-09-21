@@ -1,4 +1,4 @@
-﻿import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { UserRoundPlus, X } from "lucide-react";
 import { ContextProvider } from "../context/store";
 import { toast } from "react-toastify";
@@ -81,17 +81,21 @@ const PatientFormModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[92vh] border border-white/80">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-xs transition-all animate-[fadeIn_0.2s_ease-out]">
+      <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-4xl overflow-hidden flex flex-col max-h-[88vh] sm:max-h-[92vh] border-t sm:border border-slate-200/90 animate-slide-up sm:animate-[fadeIn_0.2s_ease-out]">
+        {/* Mobile Drag Indicator */}
+        <div className="sm:hidden pt-2.5 pb-1 flex justify-center shrink-0">
+          <div className="w-12 h-1.5 bg-slate-300 rounded-full" />
+        </div>
 
         {/* Header */}
-        <div className="px-5 sm:px-7 py-4 border-b border-slate-200 flex justify-between items-center bg-white">
+        <div className="px-5 sm:px-7 py-3.5 sm:py-4 border-b border-slate-200 flex justify-between items-center bg-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 flex items-center justify-center">
               <UserRoundPlus className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-slate-900">
+              <h2 className="text-base sm:text-lg font-black text-slate-900">
                 {selectedPatientData ? "Edit Patient" : "Add New Patient"}
               </h2>
               <p className="text-[11px] font-medium text-slate-500">Patient record and care details</p>
@@ -100,7 +104,7 @@ const PatientFormModal = ({ isOpen, onClose }) => {
           <button
             onClick={onClose}
             aria-label="Close patient form"
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -242,13 +246,22 @@ const PatientFormModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="px-5 sm:px-7 py-4 border-t border-slate-200 flex items-center justify-between gap-3 bg-white">
+        <div className="px-5 sm:px-7 py-3.5 sm:py-4 border-t border-slate-200 flex items-center justify-between gap-3 bg-white shrink-0">
           <p className="hidden sm:block text-[11px] font-medium text-slate-500">Fields marked with * are required</p>
-          <div className="flex justify-end gap-3 ml-auto">
-            <button type="button" onClick={onClose} className="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto sm:ml-auto">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-1/2 sm:w-auto px-4 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs sm:text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer text-center"
+            >
               Cancel
             </button>
-            <button type="submit" form="patient-form" disabled={isLoading} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 disabled:opacity-70 transition-colors shadow-sm shadow-indigo-600/20">
+            <button
+              type="submit"
+              form="patient-form"
+              disabled={isLoading}
+              className="w-1/2 sm:w-auto px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-indigo-700 disabled:opacity-70 transition-colors shadow-xs shadow-indigo-600/20 cursor-pointer text-center"
+            >
               {isLoading ? "Saving..." : selectedPatientData ? "Save Changes" : "Save Patient"}
             </button>
           </div>

@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   ChevronDown,
@@ -10,6 +11,7 @@ import {
   UserPlus,
   Activity,
   Clock,
+  Eye,
 } from "lucide-react";
 import { PatientKpi } from "./SharedKpis";
 import { ContextProvider } from "../../context/store";
@@ -17,6 +19,7 @@ import PatientFormModal from "../PatientFormModal";
 import { DataPageSkeleton } from "../DataPageSkeleton";
 
 export const Patients = ({ onAddPatient }) => {
+  const navigate = useNavigate();
   const {
     Patients,
     setIsEditClick,
@@ -189,21 +192,10 @@ export const Patients = ({ onAddPatient }) => {
           </div>
         </div>
 
-        {/* Mobile Card List (< 768px) */}
+        {/* Mobile List (< 768px) - Clean List with Name & Chevron */}
         <div className="md:hidden divide-y divide-slate-100">
           {filteredPatients && filteredPatients.length > 0 ? (
             filteredPatients.map((item) => {
-              let age = "N/A";
-              if (item?.date_of_birth) {
-                const birthDate = new Date(item.date_of_birth);
-                const difference = Date.now() - birthDate.getTime();
-                age =
-                  Math.floor(difference / (1000 * 60 * 60 * 24 * 365.25)) +
-                  " yrs";
-              }
-              const joinedDate = item?.createdAt
-                ? new Date(item.createdAt).toLocaleDateString()
-                : "N/A";
               const initials = item?.full_name
                 ? item.full_name.substring(0, 2).toUpperCase()
                 : "NA";
@@ -211,75 +203,19 @@ export const Patients = ({ onAddPatient }) => {
               return (
                 <div
                   key={item._id || Math.random()}
-                  className="p-4 space-y-3 bg-white hover:bg-slate-50/50 transition-colors"
+                  onClick={() => navigate(`/patients/${item._id || item.id}`, { state: { patient: item } })}
+                  className="p-3.5 sm:p-4 flex items-center justify-between gap-3 bg-white hover:bg-slate-50 active:bg-indigo-50/40 transition-colors cursor-pointer group"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
-                        {initials}
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-slate-900 text-sm capitalize truncate">
-                          {item?.full_name}
-                        </h4>
-                        <p className="text-xs text-slate-500 font-medium truncate">
-                          {item?.phone || "No phone"}
-                        </p>
-                      </div>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                      {initials}
                     </div>
-                    {item?.blood_group ? (
-                      <span className="status-badge active shrink-0">
-                        {item.blood_group}
-                      </span>
-                    ) : (
-                      <span className="status-badge inactive shrink-0">-</span>
-                    )}
+                    <h4 className="font-bold text-slate-900 text-sm capitalize truncate group-hover:text-indigo-600 transition-colors">
+                      {item?.full_name}
+                    </h4>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
-                    <div>
-                      <span className="text-slate-400 font-medium block text-[10px] uppercase">
-                        Age / Joined
-                      </span>
-                      <span className="font-semibold text-slate-700">
-                        {age} • {joinedDate}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 font-medium block text-[10px] uppercase">
-                        Doctor
-                      </span>
-                      <span className="font-semibold text-slate-700 truncate block">
-                        {item?.assigned_doctor_name || "Unassigned"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                    <button
-                      className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                      onClick={() => {
-                        setIsEditClick(true);
-                        onAddPatient();
-                        setSelectedPatientData(item);
-                      }}
-                    >
-                      <Edit className="w-3.5 h-3.5 text-indigo-600" /> Edit
-                    </button>
-                    <button
-                      className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            "Are you sure you want to delete this patient?"
-                          )
-                        ) {
-                          PatientDelete(item._id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" /> Delete
-                    </button>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-all shrink-0">
+                    <ChevronRight className="w-5 h-5" />
                   </div>
                 </div>
               );
@@ -342,11 +278,14 @@ export const Patients = ({ onAddPatient }) => {
                         />
                       </td>
                       <td>
-                        <div className="flex items-center gap-3">
+                        <div 
+                          className="flex items-center gap-3 cursor-pointer"
+                          onClick={() => navigate(`/patients/${item._id || item.id}`, { state: { patient: item } })}
+                        >
                           <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
                             {initials}
                           </div>
-                          <span className="font-bold text-slate-900 capitalize">
+                          <span className="font-bold text-slate-900 capitalize hover:text-indigo-600 transition-colors">
                             {item?.full_name}
                           </span>
                         </div>
@@ -392,6 +331,14 @@ export const Patients = ({ onAddPatient }) => {
                         <div className="flex items-center justify-end gap-1 opacity-100">
                           <button
                             className="p-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors rounded-lg cursor-pointer"
+                            title="View Patient Details"
+                            onClick={() => navigate(`/patients/${item._id || item.id}`, { state: { patient: item } })}
+                          >
+                            <Eye className="w-4 h-4 text-indigo-600" />
+                          </button>
+                          <button
+                            className="p-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors rounded-lg cursor-pointer"
+                            title="Edit Patient"
                             onClick={() => {
                               setIsEditClick(true);
                               onAddPatient();
