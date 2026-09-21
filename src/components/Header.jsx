@@ -1,4 +1,4 @@
-﻿import React, { useContext, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Menu } from 'lucide-react';
 import PopupModel from './logoutpop';
 import { ContextProvider } from '../context/store';
@@ -55,7 +55,15 @@ const Header = ({ onLogout, onToggleMobileSidebar }) => {
         </div>
       </div>
 
-      {isOpen && <PopupModel onLogout={onLogout} onClose={() => setOpen(false)} />}
+      {isOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-[9998] cursor-default" 
+            onClick={() => setOpen(false)} 
+          />
+          <PopupModel onLogout={onLogout} onClose={() => setOpen(false)} />
+        </>
+      )}
     </header>
   );
 };

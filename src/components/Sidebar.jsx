@@ -81,7 +81,7 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
   );
 
   const sidebarContent = (
-    <div className="flex flex-col h-full justify-between p-4 bg-slate-900">
+    <div className="flex flex-col h-full justify-between p-4 bg-slate-900 overflow-y-auto">
       <div className="space-y-6">
         <div>
           <p className="px-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2">Main Menu</p>
@@ -95,44 +95,46 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
         )}
       </div>
 
-      {/* User Card & Logout Button */}
-      <div className="relative overflow-hidden p-3.5 bg-gradient-to-b from-slate-800/90 via-slate-800/60 to-slate-900/95 border border-slate-700/70 rounded-2xl shadow-xl shadow-black/25 ring-1 ring-white/5">
-        {/* Subtle decorative glow */}
-        <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
+      {/* User Card & Logout Button (Only in Mobile Drawer, hidden on desktop/large screens) */}
+      <div className="md:hidden mt-6 pt-4 border-t border-slate-800/80 shrink-0">
+        <div className="relative overflow-hidden p-3.5 bg-gradient-to-b from-slate-800/90 via-slate-800/60 to-slate-900/95 border border-slate-700/70 rounded-2xl shadow-xl shadow-black/25 ring-1 ring-white/5">
+          {/* Subtle decorative glow */}
+          <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
 
-        <div className="relative flex items-center gap-3">
-          <div className="relative shrink-0">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 p-[1.5px] shadow-md shadow-indigo-500/25">
-              <div className="w-full h-full bg-slate-900/80 rounded-[10px] flex items-center justify-center font-black text-xs text-white backdrop-blur-xs tracking-wider">
-                {(currentUser?.name || currentUser?.fullName || 'U').slice(0, 2).toUpperCase()}
+          <div className="relative flex items-center gap-3">
+            <div className="relative shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 p-[1.5px] shadow-md shadow-indigo-500/25">
+                <div className="w-full h-full bg-slate-900/80 rounded-[10px] flex items-center justify-center font-black text-xs text-white backdrop-blur-xs tracking-wider">
+                  {(currentUser?.name || currentUser?.fullName || 'U').slice(0, 2).toUpperCase()}
+                </div>
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-slate-900 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-white truncate capitalize tracking-tight leading-tight">
+                {currentUser?.name || currentUser?.fullName || 'User'}
+              </p>
+              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${currentDarkBadge.badge}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${currentDarkBadge.dot} animate-pulse`} />
+                  {roleMeta.label}
+                </span>
               </div>
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-slate-900 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
           </div>
 
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-white truncate capitalize tracking-tight leading-tight">
-              {currentUser?.name || currentUser?.fullName || 'User'}
-            </p>
-            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-              <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${currentDarkBadge.badge}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${currentDarkBadge.dot} animate-pulse`} />
-                {roleMeta.label}
-              </span>
+          {/* Mobile Drawer Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="group relative w-full mt-3 py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-rose-500/20 via-rose-500/15 to-red-500/20 hover:from-rose-600 hover:via-rose-600 hover:to-red-600 active:scale-[0.98] border border-rose-500/35 hover:border-transparent text-rose-200 hover:text-white flex items-center justify-center gap-2.5 font-bold text-xs tracking-wider uppercase transition-all duration-200 cursor-pointer shadow-sm hover:shadow-lg hover:shadow-rose-950/50"
+          >
+            <div className="w-5 h-5 rounded-md bg-rose-500/20 group-hover:bg-white/20 flex items-center justify-center text-rose-300 group-hover:text-white transition-colors">
+              <LogOut className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
             </div>
-          </div>
+            <span className="font-bold">Log Out</span>
+          </button>
         </div>
-
-        {/* Attractive Mobile/Desktop Logout Button */}
-        <button
-          onClick={handleLogout}
-          className="group relative w-full mt-3 py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-rose-500/20 via-rose-500/15 to-red-500/20 hover:from-rose-600 hover:via-rose-600 hover:to-red-600 active:scale-[0.98] border border-rose-500/35 hover:border-transparent text-rose-200 hover:text-white flex items-center justify-center gap-2.5 font-bold text-xs tracking-wider uppercase transition-all duration-200 cursor-pointer shadow-sm hover:shadow-lg hover:shadow-rose-950/50"
-        >
-          <div className="w-5 h-5 rounded-md bg-rose-500/20 group-hover:bg-white/20 flex items-center justify-center text-rose-300 group-hover:text-white transition-colors">
-            <LogOut className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-          </div>
-          <span className="font-bold">Log Out</span>
-        </button>
       </div>
     </div>
   );
