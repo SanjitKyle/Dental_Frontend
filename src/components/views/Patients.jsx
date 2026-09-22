@@ -26,7 +26,12 @@ export const Patients = ({ onAddPatient }) => {
     setSelectedPatientData,
     PatientDelete,
     loading,
+    hasPermission,
   } = useContext(ContextProvider);
+
+  const canCreatePatient = hasPermission ? hasPermission('CREATE_PATIENT') : true;
+  const canEditPatient = hasPermission ? hasPermission('EDIT_PATIENT') : true;
+  const canDeletePatient = hasPermission ? hasPermission('DELETE_PATIENT') : true;
 
   const [searchValue, setSearchValue] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -100,15 +105,17 @@ export const Patients = ({ onAddPatient }) => {
             Manage patient records and clinical history.
           </p>
         </div>
-        <button
-          onClick={() => {
-            setSelectedPatientData(null);
-            onAddPatient();
-          }}
-          className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 border border-indigo-700 rounded-xl text-white hover:bg-indigo-700 text-xs font-bold uppercase tracking-wider transition-all shadow-xs shadow-indigo-600/20 text-center cursor-pointer whitespace-nowrap"
-        >
-          Add Patient
-        </button>
+        {canCreatePatient && (
+          <button
+            onClick={() => {
+              setSelectedPatientData(null);
+              onAddPatient();
+            }}
+            className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 border border-indigo-700 rounded-xl text-white hover:bg-indigo-700 text-xs font-bold uppercase tracking-wider transition-all shadow-xs shadow-indigo-600/20 text-center cursor-pointer whitespace-nowrap"
+          >
+            Add Patient
+          </button>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -336,31 +343,36 @@ export const Patients = ({ onAddPatient }) => {
                           >
                             <Eye className="w-4 h-4 text-indigo-600" />
                           </button>
-                          <button
-                            className="p-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors rounded-lg cursor-pointer"
-                            title="Edit Patient"
-                            onClick={() => {
-                              setIsEditClick(true);
-                              onAddPatient();
-                              setSelectedPatientData(item);
-                            }}
-                          >
-                            <Edit className="w-4 h-4 text-indigo-600" />
-                          </button>
-                          <button
-                            className="p-1.5 border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors rounded-lg cursor-pointer"
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  "Are you sure you want to delete this patient?"
-                                )
-                              ) {
-                                PatientDelete(item._id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {canEditPatient && (
+                            <button
+                              className="p-1.5 border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-colors rounded-lg cursor-pointer"
+                              title="Edit Patient"
+                              onClick={() => {
+                                setIsEditClick(true);
+                                onAddPatient();
+                                setSelectedPatientData(item);
+                              }}
+                            >
+                              <Edit className="w-4 h-4 text-indigo-600" />
+                            </button>
+                          )}
+                          {canDeletePatient && (
+                            <button
+                              className="p-1.5 border border-red-200 bg-white text-red-600 hover:bg-red-50 transition-colors rounded-lg cursor-pointer"
+                              title="Delete Patient"
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    "Are you sure you want to delete this patient?"
+                                  )
+                                ) {
+                                  PatientDelete(item._id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

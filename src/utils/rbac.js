@@ -67,7 +67,7 @@ export const isRoleAllowed = (role, allowedRoles = []) => {
 };
 
 /**
- * Route access permissions mapping
+ * Route access permissions mapping by role
  */
 export const ROUTE_PERMISSIONS = {
   '/dashboard': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
@@ -84,14 +84,71 @@ export const ROUTE_PERMISSIONS = {
 };
 
 /**
+ * Route to granular permission requirement for staff
+ */
+export const STAFF_ROUTE_PERMISSIONS = {
+  '/patients': ['VIEW_PATIENT', 'CREATE_PATIENT', 'EDIT_PATIENT', 'DELETE_PATIENT'],
+  '/appointments': ['VIEW_APPOINTMENT', 'CREATE_APPOINTMENT', 'EDIT_APPOINTMENT', 'CANCEL_APPOINTMENT'],
+  '/enquiries': ['VIEW_ENQUIRY', 'MANAGE_ENQUIRY', 'EDIT_ENQUIRY', 'DELETE_ENQUIRY'],
+  '/follow-up': ['MANAGE_FOLLOW_UP', 'EDIT_FOLLOW_UP', 'DELETE_FOLLOW_UP'],
+  '/odontograms': ['VIEW_ODONTOGRAM', 'CREATE_ODONTOGRAM', 'EDIT_ODONTOGRAM', 'DELETE_ODONTOGRAM'],
+  '/billing': ['PROCESS_BILLING'],
+  '/staff': ['MANAGE_STAFF'],
+  '/inventory': ['MANAGE_INVENTORY'],
+  '/test-reports': ['VIEW_REPORTS'],
+};
+
+/**
+ * Checks if a user has a specific granular permission.
+ * - Admin always has all permissions.
+ * - Doctor has standard clinical permissions.
+ * - Staff checks their explicit currentUser.permissions array.
+ */
+export const hasPermission = (permission, user = getCurrentUser()) => {
+  if (!user) return false;
+  const role = normalizeRole(user?.role || user?.employment);
+  
+  if (role === ROLES.ADMIN) return true;
+  
+  if (role === ROLES.DOCTOR) {
+    const doctorAllowed = [
+      'VIEW_PATIENT', 'CREATE_PATIENT', 'EDIT_PATIENT',
+      'VIEW_APPOINTMENT', 'CREATE_APPOINTMENT', 'EDIT_APPOINTMENT', 'CANCEL_APPOINTMENT',
+      'VIEW_ODONTOGRAM', 'CREATE_ODONTOGRAM', 'EDIT_ODONTOGRAM',
+      'MANAGE_FOLLOW_UP', 'EDIT_FOLLOW_UP', 'VIEW_REPORTS'
+    ];
+    return doctorAllowed.includes(permission);
+  }
+
+  if (role === ROLES.PATIENT) {
+    return false;
+  }
+
+  // Staff: check assigned permissions from backend
+  const staffPermissions = Array.isArray(user?.permissions) ? user.permissions : [];
+  return staffPermissions.includes(permission);
+};
+
+/**
  * Checks whether the current user can access a specific route path
  */
-export const canAccessRoute = (path, role) => {
+export const canAccessRoute = (path, role, user = getCurrentUser()) => {
   const currentRole = role || getUserRole();
   const basePath = '/' + (path.split('/')[1] || '');
   const allowed = ROUTE_PERMISSIONS[path] || ROUTE_PERMISSIONS[basePath];
   if (!allowed) return true;
-  return isRoleAllowed(currentRole, allowed);
+  if (!isRoleAllowed(currentRole, allowed)) return false;
+
+  // Granular check for Staff role based on assigned privileges
+  if (currentRole === ROLES.STAFF) {
+    const requiredPerms = STAFF_ROUTE_PERMISSIONS[path] || STAFF_ROUTE_PERMISSIONS[basePath];
+    if (requiredPerms && requiredPerms.length > 0) {
+      const hasAny = requiredPerms.some((perm) => hasPermission(perm, user));
+      if (!hasAny) return false;
+    }
+  }
+
+  return true;
 };
 
 /**

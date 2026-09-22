@@ -19,9 +19,14 @@ export default function FollowUp() {
     setSelectedPatientData,
     selectedPatientData,
     AppointmentDelete,
-    loading
+    loading,
+    hasPermission
   } = useContext(ContextProvider);
-  const [click, setClick] = useState(false)
+  const [click, setClick] = useState(false);
+
+  const canManageFollowUp = hasPermission ? hasPermission('MANAGE_FOLLOW_UP') : true;
+  const canEditFollowUp = hasPermission ? hasPermission('EDIT_FOLLOW_UP') : true;
+  const canDeleteFollowUp = hasPermission ? hasPermission('DELETE_FOLLOW_UP') : true;
 
   // Safe normalized arrays from Context
   const appointmentsList = useMemo(() => {
@@ -189,12 +194,14 @@ export default function FollowUp() {
             </button>
           </div>
 
-          <button
-            onClick={handleBookFollowUp}
-            className="flex-1 sm:flex-none px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-xs shadow-indigo-600/20 transition-all cursor-pointer whitespace-nowrap"
-          >
-            <Plus className="w-4 h-4" /> Book Follow-Up
-          </button>
+          {canManageFollowUp && (
+            <button
+              onClick={handleBookFollowUp}
+              className="flex-1 sm:flex-none px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-xs shadow-indigo-600/20 transition-all cursor-pointer whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4" /> Book Follow-Up
+            </button>
+          )}
         </div>
       </div>
 
@@ -376,26 +383,30 @@ export default function FollowUp() {
                           </button>
 
                           {/* Edit */}
-                          <button
-                            onClick={() => handleEdit(apt)}
-                            className="p-2 text-indigo-700 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-xl transition-all cursor-pointer border border-indigo-200 shadow-2xs"
-                            title="Edit Appointment"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
+                          {canEditFollowUp && (
+                            <button
+                              onClick={() => handleEdit(apt)}
+                              className="p-2 text-indigo-700 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-xl transition-all cursor-pointer border border-indigo-200 shadow-2xs"
+                              title="Edit Appointment"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                          )}
 
                           {/* Delete */}
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`Are you sure you want to delete this follow-up appointment for ${patientName}?`)) {
-                                AppointmentDelete(apt._id);
-                              }
-                            }}
-                            className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-xl transition-all cursor-pointer border border-rose-200 shadow-2xs"
-                            title="Delete Appointment"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {canDeleteFollowUp && (
+                            <button
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to delete this follow-up appointment for ${patientName}?`)) {
+                                  AppointmentDelete(apt._id);
+                                }
+                              }}
+                              className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-xl transition-all cursor-pointer border border-rose-200 shadow-2xs"
+                              title="Delete Appointment"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -476,25 +487,29 @@ export default function FollowUp() {
                     </button>
 
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedPatientData(apt);
-                          setIsEditClick(true);
-                        }}
-                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Delete follow-up appointment for ${patientName}?`)) {
-                            AppointmentDelete(apt._id);
-                          }
-                        }}
-                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canEditFollowUp && (
+                        <button
+                          onClick={() => {
+                            setSelectedPatientData(apt);
+                            setIsEditClick(true);
+                          }}
+                          className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {canDeleteFollowUp && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete follow-up appointment for ${patientName}?`)) {
+                              AppointmentDelete(apt._id);
+                            }
+                          }}
+                          className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

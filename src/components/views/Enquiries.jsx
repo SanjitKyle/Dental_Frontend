@@ -65,7 +65,11 @@ const COMMON_SERVICES = [
 ];
 
 export const Enquiries = () => {
-  const { token, Doctors, getAllPatience } = useContext(ContextProvider);
+  const { token, Doctors, getAllPatience, hasPermission } = useContext(ContextProvider);
+
+  const canManage = hasPermission ? hasPermission('MANAGE_ENQUIRY') : true;
+  const canEdit = hasPermission ? hasPermission('EDIT_ENQUIRY') : true;
+  const canDelete = hasPermission ? hasPermission('DELETE_ENQUIRY') : true;
 
   const [enquiries, setEnquiries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -116,7 +120,7 @@ export const Enquiries = () => {
       setEnquiries(normalizeEnquiries(res));
     } catch (err) {
       console.error('Failed to load enquiries:', err);
-      setError(err?.response?.data?.message || 'Failed to fetch enquiries from /api/enquiries');
+      setError(err?.response?.data?.message || 'Failed to fetch enquiries');
       setEnquiries([]);
     } finally {
       setIsLoading(false);
@@ -162,12 +166,20 @@ export const Enquiries = () => {
 
   // Open Form modal in Add or Edit mode
   const handleOpenAdd = () => {
+    if (!canManage) {
+      alert('Permission denied: You do not have privilege to add new enquiries.');
+      return;
+    }
     setEditingEnquiry(null);
     setFormData(initialForm);
     setIsFormModalOpen(true);
   };
 
   const handleOpenEdit = (enquiry) => {
+    if (!canEdit) {
+      alert('Permission denied: You do not have privilege to edit enquiries.');
+      return;
+    }
     setEditingEnquiry(enquiry);
     setFormData({
       name: enquiry.name || enquiry.full_name || '',
@@ -196,9 +208,17 @@ export const Enquiries = () => {
     setSubmitting(true);
     try {
       if (editingEnquiry) {
+        if (!canEdit) {
+          alert('Permission denied: You do not have privilege to edit enquiries.');
+          return;
+        }
         await updateEnquiry(token, editingEnquiry._id || editingEnquiry.id, formData);
         setActionSuccess('Enquiry updated successfully!');
       } else {
+        if (!canManage) {
+          alert('Permission denied: You do not have privilege to create enquiries.');
+          return;
+        }
         await createEnquiry(token, formData);
         setActionSuccess('New enquiry created successfully!');
       }
@@ -213,6 +233,11 @@ export const Enquiries = () => {
 
   // Status Update
   const handleQuickStatusChange = async (enquiry, newStatus) => {
+    if (!canEdit && !canManage) {
+      alert('Permission denied: You do not have privilege to change enquiry status.');
+      return;
+    }
+
     if (['Lost', 'Closed'].includes(newStatus)) {
       setStatusChangeTarget({ enquiry, newStatus });
       setStatusReason('');
@@ -236,6 +261,10 @@ export const Enquiries = () => {
 
   const handleConfirmReasonStatusChange = async () => {
     if (!statusChangeTarget) return;
+    if (!canEdit && !canManage) {
+      alert('Permission denied: You do not have privilege to change enquiry status.');
+      return;
+    }
     const { enquiry, newStatus } = statusChangeTarget;
     try {
       await updateEnquiryStatus(token, enquiry._id || enquiry.id, {
@@ -259,6 +288,10 @@ export const Enquiries = () => {
 
   // Convert Enquiry
   const handleConvert = async (enquiry) => {
+    if (!canManage) {
+      alert('Permission denied: You do not have privilege to convert enquiries to patients.');
+      return;
+    }
     const confirmConvert = window.confirm(
       `Convert enquiry for "${enquiry.name || 'this patient'}" to an active registered Patient?`
     );
@@ -281,6 +314,10 @@ export const Enquiries = () => {
 
   // Delete Enquiry
   const handleDelete = async (enquiry) => {
+    if (!canDelete) {
+      alert('Permission denied: Your account does not have DELETE_ENQUIRY privilege.');
+      return;
+    }
     const confirmDelete = window.confirm(
       `Are you sure you want to delete the enquiry from "${enquiry.name || 'this lead'}"?`
     );
@@ -319,9 +356,6 @@ export const Enquiries = () => {
             <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
               Patient Enquiries
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              /api/enquiries
-            </span>
           </div>
           <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
             Capture dental leads, track follow-ups, and convert enquiries to clinic appointments.
@@ -340,14 +374,16 @@ export const Enquiries = () => {
             <span className="hidden sm:inline">Refresh</span>
           </button>
 
-          <button
-            type="button"
-            onClick={handleOpenAdd}
-            className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-indigo-700 transition-colors shadow-xs shadow-indigo-600/20 uppercase tracking-wider cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Enquiry</span>
-          </button>
+          {canManage && (
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-indigo-700 transition-colors shadow-xs shadow-indigo-600/20 uppercase tracking-wider cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Enquiry</span>
+            </button>
+          )}
         </div>
       </section>
 
@@ -540,14 +576,16 @@ export const Enquiries = () => {
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
-                      <button
-                        onClick={() => handleOpenEdit(enquiry)}
-                        className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                        title="Edit"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      {enquiry.status !== 'Converted' && (
+                      {canEdit && (
+                        <button
+                          onClick={() => handleOpenEdit(enquiry)}
+                          className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                          title="Edit"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {canManage && enquiry.status !== 'Converted' && (
                         <button
                           onClick={() => handleConvert(enquiry)}
                           className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold"
@@ -556,13 +594,15 @@ export const Enquiries = () => {
                           Convert
                         </button>
                       )}
-                      <button
-                        onClick={() => handleDelete(enquiry)}
-                        className="p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDelete(enquiry)}
+                          className="p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -681,19 +721,25 @@ export const Enquiries = () => {
 
                       {/* Status with Quick Select */}
                       <td className="py-4 px-4">
-                        <div className="relative inline-block">
-                          <select
-                            value={enquiry.status || 'New'}
-                            onChange={(e) => handleQuickStatusChange(enquiry, e.target.value)}
-                            className={`text-xs font-bold px-2.5 py-1 rounded-full border cursor-pointer outline-none transition-all ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border} focus:ring-2 focus:ring-indigo-500/20`}
-                          >
-                            {STATUSES.map((st) => (
-                              <option key={st} value={st} className="bg-white text-slate-800">
-                                {st}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                        {(canEdit || canManage) ? (
+                          <div className="relative inline-block">
+                            <select
+                              value={enquiry.status || 'New'}
+                              onChange={(e) => handleQuickStatusChange(enquiry, e.target.value)}
+                              className={`text-xs font-bold px-2.5 py-1 rounded-full border cursor-pointer outline-none transition-all ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border} focus:ring-2 focus:ring-indigo-500/20`}
+                            >
+                              {STATUSES.map((st) => (
+                                <option key={st} value={st} className="bg-white text-slate-800">
+                                  {st}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ) : (
+                          <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full border ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
+                            {enquiry.status || 'New'}
+                          </span>
+                        )}
                       </td>
 
                       {/* Received Date */}
@@ -712,36 +758,42 @@ export const Enquiries = () => {
                             <Eye className="w-4 h-4" />
                           </button>
 
-                          <button
-                            onClick={() => handleOpenEdit(enquiry)}
-                            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors cursor-pointer"
-                            title="Edit enquiry"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-
-                          {enquiry.status !== 'Converted' ? (
+                          {canEdit && (
                             <button
-                              onClick={() => handleConvert(enquiry)}
-                              className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
-                              title="Convert to active patient"
+                              onClick={() => handleOpenEdit(enquiry)}
+                              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors cursor-pointer"
+                              title="Edit enquiry"
                             >
-                              <UserCheck className="w-3.5 h-3.5" />
-                              <span>Convert</span>
+                              <Edit3 className="w-4 h-4" />
                             </button>
-                          ) : (
-                            <span className="px-2 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 rounded-md border border-emerald-200">
-                              Converted ✓
-                            </span>
                           )}
 
-                          <button
-                            onClick={() => handleDelete(enquiry)}
-                            className="p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
-                            title="Delete enquiry"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {canManage && (
+                            enquiry.status !== 'Converted' ? (
+                              <button
+                                onClick={() => handleConvert(enquiry)}
+                                className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                                title="Convert to active patient"
+                              >
+                                <UserCheck className="w-3.5 h-3.5" />
+                                <span>Convert</span>
+                              </button>
+                            ) : (
+                              <span className="px-2 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 rounded-md border border-emerald-200">
+                                Converted ✓
+                              </span>
+                            )
+                          )}
+
+                          {canDelete && (
+                            <button
+                              onClick={() => handleDelete(enquiry)}
+                              className="p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                              title="Delete enquiry"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

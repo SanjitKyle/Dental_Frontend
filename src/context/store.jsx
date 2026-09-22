@@ -1,12 +1,13 @@
-﻿import { createContext, useContext, useEffect, useState, useMemo } from "react";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { CreatePatient, getPatients, EditPatients, DeletePatient } from "../services/patients";
 import { AddDoctor, getDoctors } from "../services/doctor";
 import { createAppointment, getAppointments, updateAppointment, deleteAppointment } from "../services/appointments";
 import { getPrescriptions } from "../services/prescriptions";
 import { axiosInstance } from "../services/axiosInstance";
-import { normalizeRole, canAccessRoute } from "../utils/rbac";
+import { normalizeRole, canAccessRoute, hasPermission as rbacHasPermission } from "../utils/rbac";
 
 export const ContextProvider = createContext();
+export const useAuth = () => useContext(ContextProvider);
 
 function StoreManagement({ children }) {
     const userString = localStorage.getItem("user");
@@ -41,7 +42,8 @@ function StoreManagement({ children }) {
         return normalizeRole(rawRole);
     }, [currentUser]);
 
-    const canAccess = (path) => canAccessRoute(path, userRole);
+    const canAccess = (path) => canAccessRoute(path, userRole, currentUser);
+    const hasPermission = (permission) => rbacHasPermission(permission, currentUser);
 
     async function getAllPatience() {
         setLoading((current) => ({ ...current, patients: true }));
@@ -215,7 +217,7 @@ function StoreManagement({ children }) {
 
     return (
         <ContextProvider.Provider value={{
-            user, setUser, token, currentUser, userRole, canAccess,
+            user, setUser, token, currentUser, userRole, canAccess, hasPermission,
             selectedPatientData, setSelectedPatientData,
             Patients, PatientCreate, PatientEdit, PatientDelete,
             CreateDoctor, Doctors, DoctorEdit, DoctorDelete,

@@ -1,6 +1,10 @@
 import React from 'react';
+import { useAuth } from '../../context/store';
 
 export const Billing = () => {
+  const { hasPermission } = useAuth();
+  const canProcessBilling = hasPermission ? hasPermission('PROCESS_BILLING') : true;
+
   const invoices = [
     { id: 'INV-2023-001', patient: 'Michael Chen', date: 'Oct 24, 2023', amount: '$450.00', status: 'Paid' },
     { id: 'INV-2023-002', patient: 'Sarah Jenkins', date: 'Oct 23, 2023', amount: '$1,240.00', status: 'Pending' },
@@ -14,9 +18,11 @@ export const Billing = () => {
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Billing & Invoices</h2>
           <p className="text-sm text-slate-500 mt-1">Track patient payments and insurance claims.</p>
         </div>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
-          Create Invoice
-        </button>
+        {canProcessBilling && (
+          <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
+            Create Invoice
+          </button>
+        )}
       </div>
 
       <div className="saas-card overflow-x-auto">

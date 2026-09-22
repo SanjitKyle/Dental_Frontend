@@ -53,10 +53,14 @@ const DoctorFormModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     try {
       setisLoading(true);
+      const payload = {
+        ...formData,
+        qualifications: formData.qualifications || ["BDS"]
+      };
       if (selectedPatientData) {
-        await DoctorEdit(selectedPatientData._id, formData);
+        await DoctorEdit(selectedPatientData._id, payload);
       } else {
-        await CreateDoctor(formData);
+        await CreateDoctor(payload);
       }
       if (onClose) onClose();
       setisLoading(false);
@@ -171,8 +175,8 @@ const DoctorFormModal = ({ isOpen, onClose }) => {
                   <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm bg-white" placeholder="(555) 000-0000" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Email Address</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm bg-white" placeholder="doctor@hospital.com" />
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Email Address *</label>
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full border border-slate-200/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm bg-white" placeholder="doctor@hospital.com" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Working Days</label>

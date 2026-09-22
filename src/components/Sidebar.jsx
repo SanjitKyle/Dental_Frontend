@@ -27,8 +27,8 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
   ];
 
   // Filter based on active user role permissions
-  const menuItems = rawMenuItems.filter((item) => canAccessRoute(item.path, userRole));
-  const managementItems = rawManagementItems.filter((item) => canAccessRoute(item.path, userRole));
+  const menuItems = rawMenuItems.filter((item) => canAccessRoute(item.path, userRole, currentUser));
+  const managementItems = rawManagementItems.filter((item) => canAccessRoute(item.path, userRole, currentUser));
 
   const roleMeta = ROLE_DETAILS[userRole] || { label: userRole || 'User', badgeClass: 'bg-slate-800 text-slate-300 border-slate-700' };
 

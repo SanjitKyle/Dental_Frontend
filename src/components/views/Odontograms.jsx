@@ -102,7 +102,11 @@ const SAMPLE_ODONTOGRAMS = [
 ];
 
 export const Odontograms = () => {
-  const { Patients = [], Doctors = [], token } = useContext(ContextProvider) || {};
+  const { Patients = [], Doctors = [], token, hasPermission } = useContext(ContextProvider) || {};
+
+  const canCreate = hasPermission ? hasPermission('CREATE_ODONTOGRAM') : true;
+  const canEdit = hasPermission ? hasPermission('EDIT_ODONTOGRAM') : true;
+  const canDelete = hasPermission ? hasPermission('DELETE_ODONTOGRAM') : true;
 
   // Local storage persistence
   const [odontograms, setOdontograms] = useState(() => {
@@ -130,12 +134,20 @@ export const Odontograms = () => {
 
   // Handler to open modal for new chart
   const handleOpenNew = () => {
+    if (!canCreate) {
+      alert('Permission denied: You do not have privilege to create odontograms.');
+      return;
+    }
     setEditingRecord(null);
     setIsModalOpen(true);
   };
 
   // Handler to open modal for editing chart
   const handleOpenEdit = (record) => {
+    if (!canEdit) {
+      alert('Permission denied: You do not have privilege to edit odontograms.');
+      return;
+    }
     setEditingRecord(record);
     setIsModalOpen(true);
   };
@@ -154,6 +166,10 @@ export const Odontograms = () => {
 
   // Handler to delete an odontogram
   const handleDeleteRecord = (id) => {
+    if (!canDelete) {
+      alert('Permission denied: You do not have privilege to delete odontograms.');
+      return;
+    }
     if (window.confirm("Are you sure you want to delete this dental record?")) {
       setOdontograms(odontograms.filter((o) => o._id !== id));
     }
@@ -204,12 +220,14 @@ export const Odontograms = () => {
             Manage interactive dental records, tooth conditions, surfaces, and treatment planning.
           </p>
         </div>
-        <button 
-          onClick={handleOpenNew}
-          className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 border border-indigo-700 rounded-xl text-white hover:bg-indigo-700 text-xs font-bold uppercase tracking-wider transition-all shadow-xs shadow-indigo-600/20 flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
-        >
-          <Plus className="w-4 h-4" /> New Odontogram
-        </button>
+        {canCreate && (
+          <button 
+            onClick={handleOpenNew}
+            className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 border border-indigo-700 rounded-xl text-white hover:bg-indigo-700 text-xs font-bold uppercase tracking-wider transition-all shadow-xs shadow-indigo-600/20 flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> New Odontogram
+          </button>
+        )}
       </div>
 
       {/* KPI Metrics Cards (2-cols on mobile, 4-cols on desktop) */}
@@ -388,20 +406,24 @@ export const Odontograms = () => {
                       {/* Actions */}
                       <td className="py-4 px-4 pr-6 align-middle text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleOpenEdit(item)}
-                            title="Edit Odontogram Chart"
-                            className="px-3 py-1.5 border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors rounded-lg flex items-center gap-1.5 text-xs font-bold cursor-pointer shadow-2xs"
-                          >
-                            <Edit className="w-3.5 h-3.5" /> Edit Chart
-                          </button>
-                          <button
-                            onClick={() => handleDeleteRecord(item._id)}
-                            title="Delete record"
-                            className="p-1.5 border border-red-200 bg-white hover:bg-red-50 text-red-600 transition-colors rounded-lg cursor-pointer shadow-2xs"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {canEdit && (
+                            <button
+                              onClick={() => handleOpenEdit(item)}
+                              title="Edit Odontogram Chart"
+                              className="px-3 py-1.5 border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors rounded-lg flex items-center gap-1.5 text-xs font-bold cursor-pointer shadow-2xs"
+                            >
+                              <Edit className="w-3.5 h-3.5" /> Edit Chart
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              onClick={() => handleDeleteRecord(item._id)}
+                              title="Delete record"
+                              className="p-1.5 border border-red-200 bg-white hover:bg-red-50 text-red-600 transition-colors rounded-lg cursor-pointer shadow-2xs"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -418,12 +440,14 @@ export const Odontograms = () => {
                       <p className="text-xs text-slate-500 max-w-sm">
                         Create your first interactive dental chart for a patient to get started.
                       </p>
-                      <button
-                        onClick={handleOpenNew}
-                        className="mt-2 px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm transition-all cursor-pointer"
-                      >
-                        + Create Odontogram
-                      </button>
+                      {canCreate && (
+                        <button
+                          onClick={handleOpenNew}
+                          className="mt-2 px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm transition-all cursor-pointer"
+                        >
+                          + Create Odontogram
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
