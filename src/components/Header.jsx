@@ -110,50 +110,45 @@ const Header = ({ onLogout, onToggleMobileSidebar }) => {
       {/* RIGHT: Elevated User Profile Card                                          */}
       {/* ========================================================================= */}
       <div className="flex items-center gap-2 sm:gap-3">
-        <div 
-          ref={profileContainerRef}
-          onClick={() => setIsProfileOpen(!isProfileOpen)}
-          className="flex items-center gap-2.5 p-1 sm:pl-3 sm:pr-2 rounded-2xl hover:bg-slate-100/80 border border-slate-200/80 hover:border-slate-300 transition-all duration-200 cursor-pointer select-none group shadow-xs"
-        >
-          {/* Distinct Role Badge */}
-          <div className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase tracking-wider border ${roleMeta.badgeClass}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${roleMeta.dotClass}`} />
-            {roleMeta.label}
-          </div>
-
-          {/* User Name & Details */}
-          <div className="flex flex-col text-right hidden md:block leading-tight">
-            <span className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate max-w-[130px] capitalize">
-              {displayName}
-            </span>
-            <span className="text-[10px] font-semibold text-slate-400 capitalize">
-              {roleMeta.sublabel}
-            </span>
-          </div>
-
-          {/* Avatar with Online Pulse */}
-          <div className="relative">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-700 to-purple-600 text-white font-black text-xs flex items-center justify-center shadow-md shadow-indigo-600/20 ring-2 ring-white">
-              {initials}
+        <div ref={profileContainerRef} className="relative">
+          <div 
+            onClick={() => setIsProfileOpen((prev) => !prev)}
+            className="flex items-center gap-2.5 p-1 sm:pl-3 sm:pr-2 rounded-2xl hover:bg-slate-100/80 border border-slate-200/80 hover:border-slate-300 transition-all duration-200 cursor-pointer select-none group shadow-xs"
+          >
+            {/* Distinct Role Badge */}
+            <div className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase tracking-wider border ${roleMeta.badgeClass}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${roleMeta.dotClass}`} />
+              {roleMeta.label}
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" />
+
+            {/* User Name & Details */}
+            <div className="flex flex-col text-right hidden md:block leading-tight">
+              <span className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate max-w-[130px] capitalize">
+                {displayName}
+              </span>
+              <span className="text-[10px] font-semibold text-slate-400 capitalize">
+                {roleMeta.sublabel}
+              </span>
+            </div>
+
+            {/* Avatar with Online Pulse */}
+            <div className="relative">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-700 to-purple-600 text-white font-black text-xs flex items-center justify-center shadow-md shadow-indigo-600/20 ring-2 ring-white">
+                {initials}
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" />
+            </div>
+
+            {/* Smooth Chevron Indicator */}
+            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
           </div>
 
-          {/* Smooth Chevron Indicator */}
-          <ChevronDown className={`w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
+          {/* User Profile Modal Drawer */}
+          {isProfileOpen && (
+            <PopupModel onLogout={onLogout} onClose={() => setIsProfileOpen(false)} />
+          )}
         </div>
       </div>
-
-      {/* User Profile Modal Drawer */}
-      {isProfileOpen && (
-        <>
-          <div 
-            className="fixed inset-0 z-[9998] cursor-default" 
-            onClick={() => setIsProfileOpen(false)} 
-          />
-          <PopupModel onLogout={onLogout} onClose={() => setIsProfileOpen(false)} />
-        </>
-      )}
     </header>
   );
 };

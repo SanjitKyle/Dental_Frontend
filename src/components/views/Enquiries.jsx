@@ -1,20 +1,21 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { 
-  Search, RefreshCw, Plus, Phone, Mail, Calendar, Clock, 
-  User, Stethoscope, AlertCircle, CheckCircle2, Trash2, Edit3, 
-  Eye, UserCheck, X, ChevronDown, MessageSquare, Sparkles, 
+import {
+  Search, RefreshCw, Plus, Phone, Mail, Calendar, Clock,
+  User, Stethoscope, AlertCircle, CheckCircle2, Trash2, Edit3,
+  Eye, UserCheck, X, ChevronDown, MessageSquare, Sparkles,
   ExternalLink, Filter, HelpCircle, ArrowRightCircle
 } from 'lucide-react';
 import { ContextProvider } from '../../context/store';
-import { 
-  getEnquiries, 
-  createEnquiry, 
-  updateEnquiry, 
-  updateEnquiryStatus, 
-  convertEnquiry, 
-  deleteEnquiry 
+import {
+  getEnquiries,
+  createEnquiry,
+  updateEnquiry,
+  updateEnquiryStatus,
+  convertEnquiry,
+  deleteEnquiry
 } from '../../services/enquiries';
 import { DataPageSkeleton } from '../DataPageSkeleton';
+import { useLocation } from 'react-router-dom';
 
 // Normalize API responses (handles array, { data: [...] }, { data: { enquiries: [...] } }, { enquiries: [...] })
 const normalizeEnquiries = (res) => {
@@ -67,6 +68,7 @@ const COMMON_SERVICES = [
 export const Enquiries = () => {
   const { token, Doctors, getAllPatience, hasPermission } = useContext(ContextProvider);
 
+  const location = useLocation()
   const canManage = hasPermission ? hasPermission('MANAGE_ENQUIRY') : true;
   const canEdit = hasPermission ? hasPermission('EDIT_ENQUIRY') : true;
   const canDelete = hasPermission ? hasPermission('DELETE_ENQUIRY') : true;
@@ -111,13 +113,34 @@ export const Enquiries = () => {
   const doctorsList = useMemo(() => {
     return Array.isArray(Doctors?.data) ? Doctors.data : Array.isArray(Doctors) ? Doctors : [];
   }, [Doctors]);
+  function getFilteredData(res) {
+    // Safely extract the array
+    const list = Array.isArray(res?.data)
+      ? res.data
+      : Array.isArray(res)
+        ? res
+        : [];
+
+    const isFollowUpPage = location.pathname === "/enquiry-follow-up";
+
+    if (isFollowUpPage) {
+      return list.filter(
+        (d) => (d.status || '').toLowerCase().trim() === "follow-up needed"
+      );
+    }
+
+    return list.filter(
+      (d) => (d.status || '').toLowerCase().trim() !== "follow-up needed"
+    );
+  }
 
   const fetchEnquiriesList = async () => {
     setIsLoading(true);
     setError('');
     try {
       const res = await getEnquiries(token);
-      setEnquiries(normalizeEnquiries(res));
+      const data = getFilteredData(res)
+      setEnquiries(normalizeEnquiries(data));
     } catch (err) {
       console.error('Failed to load enquiries:', err);
       setError(err?.response?.data?.message || 'Failed to fetch enquiries');
@@ -129,7 +152,7 @@ export const Enquiries = () => {
 
   useEffect(() => {
     fetchEnquiriesList();
-  }, [token]);
+  }, [token,location.pathname]);
 
   // Toast feedback auto-dismiss
   useEffect(() => {
@@ -254,6 +277,7 @@ export const Enquiries = () => {
       if (viewingEnquiry?._id === enquiry._id) {
         setViewingEnquiry((prev) => ({ ...prev, status: newStatus }));
       }
+      fetchEnquiriesList()
     } catch (err) {
       alert(err?.response?.data?.message || 'Failed to update status.');
     }
@@ -301,7 +325,7 @@ export const Enquiries = () => {
       await convertEnquiry(token, enquiry._id || enquiry.id, { createPatient: true });
       setActionSuccess(`Enquiry successfully converted to patient!`);
       if (getAllPatience) {
-        getAllPatience().catch(() => {});
+        getAllPatience().catch(() => { });
       }
       await fetchEnquiriesList();
       if (viewingEnquiry?._id === enquiry._id) {

@@ -6,21 +6,34 @@ import { ROLE_DETAILS } from '../utils/rbac';
 
 function PopupModel({ onLogout, onClose }) {
   const navigate = useNavigate();
-  const { currentUser, userRole } = useContext(ContextProvider);
+  const { currentUser, userRole, setUser, setIsAuthenticated } = useContext(ContextProvider);
 
   const displayName = currentUser?.name || currentUser?.fullName || 'Clinic User';
   const email = currentUser?.email || 'user@dentalclinic.com';
   const initials = displayName.slice(0, 2).toUpperCase();
   const roleMeta = ROLE_DETAILS[userRole] || { label: userRole || 'User', badgeClass: 'bg-slate-100 text-slate-700 border-slate-200' };
 
-  const handleLogout = () => {
-    if (onClose) onClose();
-    if (onLogout) onLogout();
-    navigate('/login');
+  const handleLogout = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      localStorage.removeItem("user");
+      if (setUser) setUser(null);
+      if (setIsAuthenticated) setIsAuthenticated(false);
+      if (onLogout) onLogout();
+      if (onClose) onClose();
+    } finally {
+      navigate('/login');
+    }
   };
 
   return (
-    <div className="absolute right-4 sm:right-6 top-[66px] w-72 bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.18)] rounded-2xl overflow-hidden z-[9999] transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
+    <div 
+      onMouseDown={(e) => e.stopPropagation()}
+      className="absolute right-0 top-[calc(100%+8px)] w-72 bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.18)] rounded-2xl overflow-hidden z-[9999] transition-all duration-200 ease-out animate-in fade-in zoom-in-95"
+    >
       {/* User Header Info */}
       <div className="p-4 border-b border-slate-100 bg-slate-50/70">
         <div className="flex items-center gap-3">

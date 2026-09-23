@@ -212,6 +212,7 @@ function App() {
               {/* Enquiries: Admin, Staff */}
               <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]} />}>
                 <Route path="/enquiries" element={<Enquiries />} />
+                <Route path="/enquiry-follow-up" element={<Enquiries />} />
               </Route>
 
               {/* Other modules */}

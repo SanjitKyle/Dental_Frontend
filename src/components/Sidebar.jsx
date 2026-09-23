@@ -1,25 +1,67 @@
 import React, { useContext } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { 
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import {
   LayoutDashboard, Users, CalendarDays, Stethoscope, MessageSquare,
-  UsersRound, Pill, Activity, X, Clock, LogOut
+  UsersRound, Pill, Activity, X, Clock, LogOut, ChevronRight
 } from 'lucide-react';
 import { ContextProvider } from '../context/store';
 import { canAccessRoute, ROLE_DETAILS, ROLES } from '../utils/rbac';
 
 const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userRole, currentUser } = useContext(ContextProvider);
 
+  // Structured menu items with nested sub-items (Follow Up under Appointments, Enquiry follow up under Enquiries)
   const rawMenuItems = [
-    { id: 'dashboard', label: userRole === ROLES.PATIENT ? 'My Dashboard' : 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { id: 'patients', label: 'Patients', icon: Users, path: '/patients' },
-    { id: 'doctors', label: 'Doctors', icon: Stethoscope, path: '/doctors' },
-    { id: 'appointments', label: userRole === ROLES.PATIENT ? 'My Appointments' : 'Appointments', icon: CalendarDays, path: '/appointments' },
-    { id: 'odontograms', label: 'Odontograms', icon: Activity, path: '/odontograms' },
-    { id: 'prescriptions', label: userRole === ROLES.PATIENT ? 'My Prescriptions' : 'Prescriptions', icon: Pill, path: '/prescriptions' },
-    { id: 'follow up', label: 'Follow Up', icon: Clock, path: '/follow-up' },
-    { id: 'enquiries', label: 'Enquiries', icon: MessageSquare, path: '/enquiries' },
+    { 
+      id: 'dashboard', 
+      label: userRole === ROLES.PATIENT ? 'My Dashboard' : 'Dashboard', 
+      icon: LayoutDashboard, 
+      path: '/dashboard' 
+    },
+    { 
+      id: 'patients', 
+      label: 'Patients', 
+      icon: Users, 
+      path: '/patients' 
+    },
+    { 
+      id: 'doctors', 
+      label: 'Doctors', 
+      icon: Stethoscope, 
+      path: '/doctors' 
+    },
+    { 
+      id: 'appointments', 
+      label: userRole === ROLES.PATIENT ? 'My Appointments' : 'Appointments', 
+      icon: CalendarDays, 
+      path: '/appointments',
+      children: [
+        { id: 'follow-up', label: 'Follow Up', icon: Clock, path: '/follow-up' }
+      ]
+    },
+    { 
+      id: 'odontograms', 
+      label: 'Odontograms', 
+      icon: Activity, 
+      path: '/odontograms' 
+    },
+    { 
+      id: 'prescriptions', 
+      label: userRole === ROLES.PATIENT ? 'My Prescriptions' : 'Prescriptions', 
+      icon: Pill, 
+      path: '/prescriptions' 
+    },
+    { 
+      id: 'enquiries', 
+      label: 'Enquiries', 
+      icon: MessageSquare, 
+      path: '/enquiries',
+      children: [
+        { id: 'enquiry-follow-up', label: 'Enquiry follow up', icon: Clock, path: '/enquiry-follow-up' }
+      ]
+    },
   ];
 
   const rawManagementItems = [
@@ -27,7 +69,15 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
   ];
 
   // Filter based on active user role permissions
-  const menuItems = rawMenuItems.filter((item) => canAccessRoute(item.path, userRole, currentUser));
+  const menuItems = rawMenuItems
+    .filter((item) => canAccessRoute(item.path, userRole, currentUser))
+    .map((item) => ({
+      ...item,
+      children: item.children 
+        ? item.children.filter((child) => canAccessRoute(child.path, userRole, currentUser))
+        : []
+    }));
+
   const managementItems = rawManagementItems.filter((item) => canAccessRoute(item.path, userRole, currentUser));
 
   const roleMeta = ROLE_DETAILS[userRole] || { label: userRole || 'User', badgeClass: 'bg-slate-800 text-slate-300 border-slate-700' };
@@ -52,51 +102,140 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
   };
 
   const renderNav = (items) => (
-    <nav className="space-y-1">
+    <nav className="space-y-1.5">
       {items.map((item) => {
         const Icon = item.icon;
+        const hasChildren = item.children && item.children.length > 0;
+        const isParentActive = location.pathname === item.path;
+        const isAnyChildActive = hasChildren && item.children.some((c) => location.pathname === c.path);
+
         return (
-          <NavLink
-            key={item.id}
-            to={item.path}
-            onClick={() => {
-              if (onCloseMobile) onCloseMobile();
-            }}
-            className={({ isActive }) => `relative flex items-center gap-3 px-3.5 py-2.5 transition-all duration-200 group rounded-xl ${
-              isActive 
-                ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-bold shadow-md shadow-indigo-600/30' 
-                : 'text-slate-400 hover:bg-slate-800/80 hover:text-white font-medium'
-            }`}
-          >
-            {({ isActive }) => (
-              <>
-                <Icon className={`w-4 h-4 transition-colors duration-200 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-400'}`} />
-                <span className="text-sm tracking-wide">{item.label}</span>
-              </>
+          <div key={item.id} className="space-y-1">
+            {/* Top-Level Item */}
+            <NavLink
+              to={item.path}
+              onClick={() => {
+                if (onCloseMobile) onCloseMobile();
+              }}
+              className={({ isActive }) => `relative flex items-center justify-between px-3.5 py-2.5 transition-all duration-200 group rounded-xl ${
+                isActive
+                  ? 'bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/30 ring-1 ring-white/10'
+                  : isAnyChildActive
+                  ? 'bg-slate-800/70 text-indigo-300 font-semibold border border-indigo-500/20'
+                  : 'text-slate-400 hover:bg-slate-800/80 hover:text-white font-medium'
+              }`}
+            >
+              {({ isActive }) => (
+                <>
+                  <div className="flex items-center gap-3 min-w-0">
+                    {/* Glowing vertical pill on active */}
+                    {isActive && (
+                      <span className="w-1 h-5 rounded-full bg-white absolute left-1 shadow-sm" />
+                    )}
+                    <Icon className={`w-4.5 h-4.5 transition-all duration-200 shrink-0 ${
+                      isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-400 group-hover:scale-105'
+                    }`} />
+                    <span className="text-sm tracking-wide truncate">{item.label}</span>
+                  </div>
+
+                  {/* Sub-item Indicator */}
+                  {hasChildren && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold transition-colors ${
+                      isActive 
+                        ? 'bg-white/20 text-white' 
+                        : isAnyChildActive
+                        ? 'bg-indigo-500/20 text-indigo-300'
+                        : 'bg-slate-800 text-slate-500 group-hover:text-slate-300'
+                    }`}>
+                      {item.children.length}
+                    </span>
+                  )}
+                </>
+              )}
+            </NavLink>
+
+            {/* Elegant Tree Connected Sub-Items */}
+            {hasChildren && (
+              <div className="relative ml-5 pl-3.5 border-l-2 border-slate-800 space-y-1 py-0.5 my-1">
+                {item.children.map((child) => {
+                  const ChildIcon = child.icon;
+                  return (
+                    <NavLink
+                      key={child.id}
+                      to={child.path}
+                      onClick={() => {
+                        if (onCloseMobile) onCloseMobile();
+                      }}
+                      className={({ isActive }) => `relative flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-200 group ${
+                        isActive
+                          ? 'bg-indigo-500/15 text-indigo-200 font-bold border border-indigo-500/30 shadow-sm shadow-indigo-500/10'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 font-medium'
+                      }`}
+                    >
+                      {({ isActive }) => (
+                        <>
+                          {/* Horizontal connector tick to tree line */}
+                          <span className={`absolute -left-[16px] top-1/2 -translate-y-1/2 w-2.5 h-px transition-colors ${
+                            isActive ? 'bg-indigo-400' : 'bg-slate-700/80 group-hover:bg-indigo-400/80'
+                          }`} />
+
+                          {/* Branch Connector active dot */}
+                          {isActive && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 absolute -left-[18px] top-1/2 -translate-y-1/2 shadow-xs shadow-indigo-400" />
+                          )}
+
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${
+                              isActive ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-800/70 text-slate-500 group-hover:text-indigo-400'
+                            }`}>
+                              <ChildIcon className="w-3.5 h-3.5" />
+                            </div>
+                            <span className="truncate">{child.label}</span>
+                          </div>
+
+                          {isActive && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse ml-2" />
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
             )}
-          </NavLink>
+          </div>
         );
       })}
     </nav>
   );
 
   const sidebarContent = (
-    <div className="flex flex-col h-full justify-between p-4 bg-slate-900 overflow-y-auto">
-      <div className="space-y-6">
+    <div className="flex flex-col h-full justify-between p-4 bg-gradient-to-b from-slate-900 via-slate-900 to-[#0B132B] overflow-y-auto relative">
+      {/* Ambient Top Glow */}
+      <div className="absolute top-0 left-0 right-0 h-36 bg-gradient-to-b from-indigo-500/5 to-transparent pointer-events-none" />
+
+      <div className="space-y-6 relative z-10">
         <div>
-          <p className="px-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2">Main Menu</p>
+          <div className="px-3.5 mb-2.5 flex items-center justify-between">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500/90">Main Menu</p>
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/40" />
+          </div>
           {renderNav(menuItems)}
         </div>
+
         {managementItems.length > 0 && (
           <div>
-            <p className="px-3 text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2">Management</p>
+            <div className="px-3.5 mb-2.5 flex items-center justify-between">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500/90">Management</p>
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500/40" />
+            </div>
             {renderNav(managementItems)}
           </div>
         )}
       </div>
 
       {/* User Card & Logout Button (Only in Mobile Drawer, hidden on desktop/large screens) */}
-      <div className="md:hidden mt-6 pt-4 border-t border-slate-800/80 shrink-0">
+      <div className="md:hidden mt-6 pt-4 border-t border-slate-800/80 shrink-0 relative z-10">
         <div className="relative overflow-hidden p-3.5 bg-gradient-to-b from-slate-800/90 via-slate-800/60 to-slate-900/95 border border-slate-700/70 rounded-2xl shadow-xl shadow-black/25 ring-1 ring-white/5">
           {/* Subtle decorative glow */}
           <div className="absolute -top-8 -right-8 w-24 h-24 bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-transparent rounded-full blur-xl pointer-events-none" />
@@ -142,14 +281,14 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
   return (
     <>
       {/* 1. Desktop Fixed Sidebar */}
-      <aside className="hidden md:flex w-64 glass-panel h-full flex-col z-10 relative bg-slate-900 border-r border-slate-800 text-slate-100 shrink-0">
+      <aside className="hidden md:flex w-64 glass-panel h-full flex-col z-10 relative bg-slate-900 border-r border-slate-800/90 text-slate-100 shrink-0">
         {sidebarContent}
       </aside>
 
       {/* 2. Mobile Drawer Slide-Out */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden animate-[fadeIn_0.2s_ease-out]">
-          <div 
+          <div
             className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity cursor-pointer"
             onClick={onCloseMobile}
           />
@@ -157,18 +296,20 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
           <div className="relative w-72 max-w-[82vw] h-full bg-slate-900 border-r border-slate-800/90 shadow-2xl flex flex-col z-50 animate-slide-left">
             <div className="p-4 border-b border-slate-800/90 flex items-center justify-between bg-slate-900/60 backdrop-blur-md">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 via-indigo-600 to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-base shadow-md shadow-indigo-500/25 ring-1 ring-white/20">
-                  C
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/25 ring-2 ring-indigo-50">
+                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2C8.8 2 6.5 4.3 6.5 7.5c0 2.8 1.4 5.3 2.5 8.2.8 2.2 1.4 4.3 2.2 4.3.9 0 1.5-2.1 2.2-4.3 1.1-2.9 2.6-5.4 2.6-8.2C17.5 4.3 15.2 2 12 2zm0 3c.6 0 1 .4 1 1s-.4 1-1 1-1-.4-1-1 .4-1 1-1zm2 10.5c-.7 1.8-1.3 3.3-1.8 3.5-.5-.2-1.1-1.7-1.8-3.5-.9-2.3-2.1-4.4-2.1-6.5 0-2.2 1.6-3.8 3.7-3.8s3.7 1.6 3.7 3.8c0 2.1-1.2 4.2-2.1 6.5z"/>
+                  </svg>
                 </div>
                 <div>
-                  <span className="font-black text-white text-base tracking-tight block leading-tight">Dental Clinic</span>
+                  <span className="font-black text-white text-base tracking-tight block leading-tight">DentalClinic</span>
                   <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5 mt-0.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Health Portal
+                    Healthcare Suite
                   </span>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={onCloseMobile}
                 className="w-8 h-8 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer border border-slate-700/60"
                 title="Close Menu"
@@ -186,4 +327,3 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
 };
 
 export default Sidebar;
-
