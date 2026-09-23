@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -34,7 +34,15 @@ import { ROLES } from "./utils/rbac";
 // ============================================================================
 // 1. MAIN APPLICATION LAYOUT
 // ============================================================================
-const MainLayout = ({ isPatientModalOpen, closePatientModal, isDoctorModalOpen, closeDoctorModal, onLogout }) => {
+const MainLayout = ({ 
+  isPatientModalOpen, 
+  closePatientModal, 
+  isDoctorModalOpen, 
+  closeDoctorModal, 
+  openPatientModal, 
+  openDoctorModal, 
+  onLogout 
+}) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   return (
@@ -47,6 +55,8 @@ const MainLayout = ({ isPatientModalOpen, closePatientModal, isDoctorModalOpen, 
       <Header
         onLogout={onLogout}
         onToggleMobileSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
+        onAddPatient={openPatientModal}
+        onAddDoctor={openDoctorModal}
       />
 
       {/* Main Body (Sidebar + Content Area) */}
@@ -149,6 +159,8 @@ function App() {
                   closePatientModal={closePatientModal}
                   isDoctorModalOpen={isDoctorModalOpen}
                   closeDoctorModal={closeDoctorModal}
+                  openPatientModal={openPatientModal}
+                  openDoctorModal={openDoctorModal}
                   onLogout={() => {
                     localStorage.removeItem("user");
                     setIsAuthenticated(false);

@@ -1,4 +1,4 @@
-﻿import React, { useContext } from 'react';
+import React, { useContext } from 'react';
 import { User, LogOut, Settings, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ContextProvider } from '../context/store';
@@ -20,11 +20,11 @@ function PopupModel({ onLogout, onClose }) {
   };
 
   return (
-    <div className="absolute right-4 sm:right-6 top-14 w-72 bg-white border border-slate-200/90 shadow-[0_12px_40px_rgba(0,0,0,0.15)] rounded-2xl overflow-hidden z-[9999] transition-all duration-200 ease-out">
+    <div className="absolute right-4 sm:right-6 top-[66px] w-72 bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.18)] rounded-2xl overflow-hidden z-[9999] transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
       {/* User Header Info */}
-      <div className="p-4 border-b border-slate-100 bg-slate-50/80">
+      <div className="p-4 border-b border-slate-100 bg-slate-50/70">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-md shadow-indigo-600/20 shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-700 to-purple-600 flex items-center justify-center text-white font-black text-sm shadow-md shadow-indigo-600/25 shrink-0 ring-2 ring-white">
             {initials}
           </div>
           <div className="flex flex-col min-w-0">
