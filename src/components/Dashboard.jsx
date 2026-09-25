@@ -1,4 +1,4 @@
-﻿import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import { Calendar, FileText, UsersRound, Stethoscope, Clock, ShieldCheck, HeartPulse } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ContextProvider } from '../context/store';
@@ -89,12 +89,17 @@ const Dashboard = ({ onAddPatient, onAddDoctor }) => {
     const upcoming = appointments
       .filter((item) => {
         const status = String(item.status || 'Scheduled').toLowerCase();
-        return !isFollowUp(item) && (status === 'scheduled' || status === 'pending');
+        const aptDate = new Date(item.date || item.createdAt);
+        const isUpcoming = aptDate >= startOfToday; // only today or future
+        return !isFollowUp(item) && isUpcoming && (status === 'scheduled' || status === 'pending');
       })
       .sort((a, b) => new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt))
       .slice(0, 4);
 
-    const followUps = futureAppointments.filter(isFollowUp).slice(0, 4);
+    const completed = appointments
+      .filter((item) => String(item.status || '').toLowerCase() === 'completed')
+      .sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt))
+      .slice(0, 4);
     const recentPatients = [...patients].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 4);
     const statuses = appointments.reduce((result, item) => {
       const status = item.status || 'Scheduled';
@@ -113,7 +118,7 @@ const Dashboard = ({ onAddPatient, onAddDoctor }) => {
       if (month) month.count += 1;
     });
 
-    return { upcoming, followUps, recentPatients, statuses, months };
+    return { upcoming, completed, recentPatients, statuses, months };
   }, [appointments, patients]);
 
   const totalStatus = Math.max(appointments.length, 1);
@@ -130,7 +135,7 @@ const Dashboard = ({ onAddPatient, onAddDoctor }) => {
           kpi1: { title: 'Assigned Patients', value: patients.length, subtext: 'Registered under clinic', icon: UsersRound, iconBg: 'bg-indigo-50 text-indigo-700 border-indigo-100' },
           kpi2: { title: 'Prescriptions Issued', value: prescriptions.length, subtext: 'Active clinical records', icon: FileText, iconBg: 'bg-purple-50 text-purple-700 border-purple-100' },
           kpi3: { title: 'Appointments Today', value: dashboard.upcoming.length, subtext: 'Scheduled consultations', icon: Calendar, iconBg: 'bg-teal-50 text-teal-700 border-teal-100' },
-          kpi4: { title: 'Follow-ups Due', value: dashboard.followUps.length, subtext: 'Pending reviews', icon: Clock, iconBg: 'bg-amber-50 text-amber-700 border-amber-100' },
+          kpi4: { title: 'Completed', value: dashboard.completed.length, subtext: 'Completed appointments', icon: Clock, iconBg: 'bg-amber-50 text-amber-700 border-amber-100' },
         };
       case ROLES.STAFF:
         return {
@@ -141,7 +146,7 @@ const Dashboard = ({ onAddPatient, onAddDoctor }) => {
           kpi1: { title: 'Total Patients', value: patients.length, subtext: 'Registered clinic patients', icon: UsersRound, iconBg: 'bg-indigo-50 text-indigo-700 border-indigo-100' },
           kpi2: { title: 'Prescriptions Active', value: prescriptions.length, subtext: 'Issued medications', icon: FileText, iconBg: 'bg-purple-50 text-purple-700 border-purple-100' },
           kpi3: { title: 'Appointments', value: appointments.length, subtext: `${dashboard.upcoming.length} upcoming`, icon: Calendar, iconBg: 'bg-teal-50 text-teal-700 border-teal-100' },
-          kpi4: { title: 'Follow-ups Needed', value: dashboard.followUps.length, subtext: 'Call back queue', icon: Clock, iconBg: 'bg-amber-50 text-amber-700 border-amber-100' },
+          kpi4: { title: 'Completed', value: dashboard.completed.length, subtext: 'Completed appointments', icon: Clock, iconBg: 'bg-amber-50 text-amber-700 border-amber-100' },
         };
       case ROLES.PATIENT:
         return {
@@ -271,11 +276,11 @@ const Dashboard = ({ onAddPatient, onAddDoctor }) => {
               <button 
                 type="button" 
                 role="tab" 
-                aria-selected={appointmentTab === 'followups'} 
-                onClick={() => setAppointmentTab('followups')} 
-                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-colors ${appointmentTab === 'followups' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-500 hover:text-slate-700'}`}
+                aria-selected={appointmentTab === 'completed'} 
+                onClick={() => setAppointmentTab('completed')} 
+                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-colors ${appointmentTab === 'completed' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-500 hover:text-slate-700'}`}
               >
-                Follow-ups ({dashboard.followUps.length})
+                Completed ({dashboard.completed.length})
               </button>
             </div>
           </div>
@@ -283,11 +288,11 @@ const Dashboard = ({ onAddPatient, onAddDoctor }) => {
             <div className="space-y-3">{[1, 2, 3].map((item) => <Skeleton key={item} className="h-16 w-full" />)}</div>
           ) : (
             <AppointmentRows 
-              appointments={appointmentTab === 'upcoming' ? dashboard.upcoming : dashboard.followUps} 
+              appointments={appointmentTab === 'upcoming' ? dashboard.upcoming : dashboard.completed} 
               patients={patients} 
               doctors={doctors} 
               resolveName={resolveName} 
-              emptyMessage={appointmentTab === 'upcoming' ? 'No upcoming appointments.' : 'No follow-up appointments.'} 
+              emptyMessage={appointmentTab === 'upcoming' ? 'No upcoming appointments.' : 'No completed appointments.'} 
             />
           )}
         </section>
