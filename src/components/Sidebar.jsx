@@ -2,7 +2,8 @@ import React, { useContext } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, CalendarDays, Stethoscope, MessageSquare,
-  UsersRound, Pill, Activity, X, Clock, LogOut, ChevronRight
+  UsersRound, Pill, Activity, X, Clock, LogOut, ChevronRight,
+  Receipt
 } from 'lucide-react';
 import { ContextProvider } from '../context/store';
 import { canAccessRoute, ROLE_DETAILS, ROLES } from '../utils/rbac';
@@ -28,7 +29,7 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
     },
     { 
       id: 'doctors', 
-      label: 'Doctors', 
+      label: userRole === ROLES.PATIENT ? 'Our Doctors' : 'Doctors', 
       icon: Stethoscope, 
       path: '/doctors' 
     },
@@ -43,7 +44,7 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
     },
     { 
       id: 'odontograms', 
-      label: 'Odontograms', 
+      label: userRole === ROLES.PATIENT ? 'My Dental Chart' : 'Odontograms', 
       icon: Activity, 
       path: '/odontograms' 
     },
@@ -54,8 +55,14 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
       path: '/prescriptions' 
     },
     { 
+      id: 'billing', 
+      label: userRole === ROLES.PATIENT ? 'My Invoices' : 'Billing & Invoices', 
+      icon: Receipt, 
+      path: '/billing' 
+    },
+    { 
       id: 'enquiries', 
-      label: 'Enquiries', 
+      label: userRole === ROLES.PATIENT ? 'Help & Enquiries' : 'Enquiries', 
       icon: MessageSquare, 
       path: '/enquiries',
       children: [
@@ -68,17 +75,38 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
     { id: 'staff', label: 'Staff & Roles', icon: UsersRound, path: '/staff' },
   ];
 
-  // Filter based on active user role permissions
-  const menuItems = rawMenuItems
-    .filter((item) => canAccessRoute(item.path, userRole, currentUser))
-    .map((item) => ({
-      ...item,
-      children: item.children 
-        ? item.children.filter((child) => canAccessRoute(child.path, userRole, currentUser))
-        : []
-    }));
+  // Filter based on active user role permissions:
+  // If a parent item has accessible children, it should be kept visible
+  // and clicking it will route to the first accessible child if the parent route itself is restricted.
+  const filterMenuItems = (items) => {
+    return items
+      .map((item) => {
+        const accessibleChildren = item.children
+          ? item.children.filter((child) => canAccessRoute(child.path, userRole, currentUser))
+          : [];
+        const isParentDirectlyAccessible = canAccessRoute(item.path, userRole, currentUser);
 
-  const managementItems = rawManagementItems.filter((item) => canAccessRoute(item.path, userRole, currentUser));
+        // If neither the parent nor any child is accessible, hide the menu
+        if (!isParentDirectlyAccessible && accessibleChildren.length === 0) {
+          return null;
+        }
+
+        const targetPath = isParentDirectlyAccessible
+          ? item.path
+          : (accessibleChildren[0]?.path || item.path);
+
+        return {
+          ...item,
+          targetPath,
+          isParentDirectlyAccessible,
+          children: accessibleChildren,
+        };
+      })
+      .filter(Boolean);
+  };
+
+  const menuItems = filterMenuItems(rawMenuItems);
+  const managementItems = filterMenuItems(rawManagementItems);
 
   const roleMeta = ROLE_DETAILS[userRole] || { label: userRole || 'User', badgeClass: 'bg-slate-800 text-slate-300 border-slate-700' };
 
@@ -106,52 +134,58 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
       {items.map((item) => {
         const Icon = item.icon;
         const hasChildren = item.children && item.children.length > 0;
-        const isParentActive = location.pathname === item.path;
+        const isParentActive = location.pathname === item.path || (!hasChildren && item.targetPath && location.pathname === item.targetPath);
         const isAnyChildActive = hasChildren && item.children.some((c) => location.pathname === c.path);
 
         return (
           <div key={item.id} className="space-y-1">
             {/* Top-Level Item */}
             <NavLink
-              to={item.path}
+              to={item.targetPath || item.path}
               onClick={() => {
                 if (onCloseMobile) onCloseMobile();
               }}
-              className={({ isActive }) => `relative flex items-center justify-between px-3.5 py-2.5 transition-all duration-200 group rounded-xl ${
-                isActive
-                  ? 'bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/30 ring-1 ring-white/10'
-                  : isAnyChildActive
-                  ? 'bg-slate-800/70 text-indigo-300 font-semibold border border-indigo-500/20'
-                  : 'text-slate-400 hover:bg-slate-800/80 hover:text-white font-medium'
-              }`}
+              className={({ isActive }) => {
+                const active = isActive || location.pathname === item.path || (!hasChildren && item.targetPath && location.pathname === item.targetPath);
+                return `relative flex items-center justify-between px-3.5 py-2.5 transition-all duration-200 group rounded-xl ${
+                  active
+                    ? 'bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/30 ring-1 ring-white/10'
+                    : isAnyChildActive
+                    ? 'bg-slate-800/70 text-indigo-300 font-semibold border border-indigo-500/20'
+                    : 'text-slate-400 hover:bg-slate-800/80 hover:text-white font-medium'
+                }`;
+              }}
             >
-              {({ isActive }) => (
-                <>
-                  <div className="flex items-center gap-3 min-w-0">
-                    {/* Glowing vertical pill on active */}
-                    {isActive && (
-                      <span className="w-1 h-5 rounded-full bg-white absolute left-1 shadow-sm" />
-                    )}
-                    <Icon className={`w-4.5 h-4.5 transition-all duration-200 shrink-0 ${
-                      isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-400 group-hover:scale-105'
-                    }`} />
-                    <span className="text-sm tracking-wide truncate">{item.label}</span>
-                  </div>
+              {({ isActive }) => {
+                const active = isActive || location.pathname === item.path || (!hasChildren && item.targetPath && location.pathname === item.targetPath);
+                return (
+                  <>
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Glowing vertical pill on active */}
+                      {active && (
+                        <span className="w-1 h-5 rounded-full bg-white absolute left-1 shadow-sm" />
+                      )}
+                      <Icon className={`w-4.5 h-4.5 transition-all duration-200 shrink-0 ${
+                        active ? 'text-white' : 'text-slate-400 group-hover:text-indigo-400 group-hover:scale-105'
+                      }`} />
+                      <span className="text-sm tracking-wide truncate">{item.label}</span>
+                    </div>
 
-                  {/* Sub-item Indicator */}
-                  {hasChildren && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold transition-colors ${
-                      isActive 
-                        ? 'bg-white/20 text-white' 
-                        : isAnyChildActive
-                        ? 'bg-indigo-500/20 text-indigo-300'
-                        : 'bg-slate-800 text-slate-500 group-hover:text-slate-300'
-                    }`}>
-                      {item.children.length}
-                    </span>
-                  )}
-                </>
-              )}
+                    {/* Sub-item Indicator */}
+                    {hasChildren && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold transition-colors ${
+                        active 
+                          ? 'bg-white/20 text-white' 
+                          : isAnyChildActive
+                          ? 'bg-indigo-500/20 text-indigo-300'
+                          : 'bg-slate-800 text-slate-500 group-hover:text-slate-300'
+                      }`}>
+                        {item.children.length}
+                      </span>
+                    )}
+                  </>
+                );
+              }}
             </NavLink>
 
             {/* Elegant Tree Connected Sub-Items */}
@@ -217,7 +251,9 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
       <div className="space-y-6 relative z-10">
         <div>
           <div className="px-3.5 mb-2.5 flex items-center justify-between">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500/90">Main Menu</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500/90">
+              {userRole === ROLES.PATIENT ? 'Patient Portal' : 'Main Menu'}
+            </p>
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/40" />
           </div>
           {renderNav(menuItems)}

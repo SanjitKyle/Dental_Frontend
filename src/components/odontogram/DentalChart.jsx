@@ -95,33 +95,38 @@ export const DentalChart = ({
   };
 
   return (
-    <div className="flex flex-col w-full bg-slate-50/70 rounded-3xl p-4 md:p-6 border border-slate-200 shadow-xs">
+    <div className="flex flex-col w-full bg-slate-50/70 rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 md:p-6 border border-slate-200 shadow-xs">
       
       {/* Arch Header Bar */}
-      <div className="flex items-center justify-between text-xs font-bold mb-3 px-1">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
-          <span className="text-blue-800 bg-blue-50 font-extrabold px-3 py-1 rounded-full border border-blue-200 uppercase tracking-wider text-[11px]">
+      <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 text-xs font-bold mb-2.5 px-1">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+          <span className="text-blue-800 bg-blue-50 font-extrabold px-2.5 py-0.5 rounded-full border border-blue-200 uppercase tracking-wider text-[10px] sm:text-[11px]">
             Right (Patient)
           </span>
         </div>
 
-        <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-1.5 rounded-full shadow-sm">
-          <span className="font-black text-xs uppercase tracking-widest">
+        <div className="flex items-center gap-1.5 bg-slate-900 text-white px-3 py-1 sm:px-4 sm:py-1.5 rounded-full shadow-sm">
+          <span className="font-black text-[10px] sm:text-xs uppercase tracking-widest text-center">
             Maxillary Arch (Upper Jaw)
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-blue-800 bg-blue-50 font-extrabold px-3 py-1 rounded-full border border-blue-200 uppercase tracking-wider text-[11px]">
+        <div className="flex items-center gap-1.5">
+          <span className="text-blue-800 bg-blue-50 font-extrabold px-2.5 py-0.5 rounded-full border border-blue-200 uppercase tracking-wider text-[10px] sm:text-[11px]">
             Left (Patient)
           </span>
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
         </div>
       </div>
 
+      {/* Mobile Scroll Hint */}
+      <div className="sm:hidden text-center text-[10px] font-bold text-slate-400 mb-1">
+        Scroll horizontally to view all teeth ↔
+      </div>
+
       {/* UPPER ARCH CONTAINER */}
-      <div className="bg-white p-4 pt-3 pb-5 rounded-2xl border border-slate-200 shadow-sm mb-4 overflow-x-auto">
+      <div className="bg-white p-3 sm:p-4 pt-3 pb-5 rounded-2xl border border-slate-200 shadow-sm mb-4 overflow-x-auto [scrollbar-width:thin]">
         {/* Quadrant Subheaders */}
         <div className="flex items-center justify-between text-[11px] font-black text-blue-700 uppercase tracking-wider mb-2.5 px-2 min-w-[760px]">
           <span>{chartType === 'pediatric' ? 'Quadrant 5 (Upper Right)' : 'Quadrant 1 (Upper Right)'}</span>
@@ -224,8 +229,8 @@ export const DentalChart = ({
 
       {/* Lower Arch Footer */}
       <div className="flex items-center justify-center mt-2">
-        <div className="flex items-center gap-2 bg-slate-900 text-white px-4 py-1.5 rounded-full shadow-sm">
-          <span className="font-black text-xs uppercase tracking-widest">
+        <div className="flex items-center gap-1.5 bg-slate-900 text-white px-3 py-1 sm:px-4 sm:py-1.5 rounded-full shadow-sm">
+          <span className="font-black text-[10px] sm:text-xs uppercase tracking-widest text-center">
             Mandibular Arch (Lower Jaw)
           </span>
         </div>

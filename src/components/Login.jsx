@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck, Activity, Stethoscope } from 'lucide-react';
 import { login } from '../services/auth';
+import { getStaff } from '../services/staff';
 import { ContextProvider } from '../context/store';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -20,6 +21,41 @@ const Login = ({ onLogin }) => {
       setIsLoading(true);
       const res = await login({ email, password });
       if (res.data.success) {
+        const token = res.data?.data?.token || res.data?.token;
+        const loggedUser = res.data?.data?.user || res.data?.user;
+
+        // If staff role, try to immediately fetch and attach their granular permissions
+        if (token && (loggedUser?.role === 'staff' || !loggedUser?.role)) {
+          try {
+            const staffRes = await getStaff(token);
+            const staffList = Array.isArray(staffRes?.data) ? staffRes.data : Array.isArray(staffRes) ? staffRes : [];
+            const userEmail = (loggedUser?.email || email || '').toLowerCase().trim();
+            const userId = String(loggedUser?._id || loggedUser?.id || '');
+            const userName = (loggedUser?.name || loggedUser?.fullName || '').toLowerCase().trim();
+
+            const matched = staffList.find(s => 
+              (s.email && s.email.toLowerCase().trim() === userEmail) ||
+              (s.employeeuserId && String(s.employeeuserId) === userId) ||
+              (s._id && String(s._id) === userId) ||
+              (s.fullName && s.fullName.toLowerCase().trim() === userName)
+            );
+
+            if (matched && Array.isArray(matched.permissions)) {
+              if (res.data?.data?.user) {
+                res.data.data.user.permissions = matched.permissions;
+                res.data.data.user.employment = matched.employment;
+                res.data.data.user.designation = matched.designation;
+              } else if (res.data?.user) {
+                res.data.user.permissions = matched.permissions;
+                res.data.user.employment = matched.employment;
+                res.data.user.designation = matched.designation;
+              }
+            }
+          } catch (staffErr) {
+            console.warn('Could not pre-fetch staff permissions on login:', staffErr);
+          }
+        }
+
         localStorage.setItem("user", JSON.stringify(res.data));
         setUser(res.data);
         if (onLogin) onLogin(); 

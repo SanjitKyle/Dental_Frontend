@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useState, useMemo } from "react";
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
 import { CreatePatient, getPatients, EditPatients, DeletePatient } from "../services/patients";
 import { AddDoctor, getDoctors } from "../services/doctor";
 import { createAppointment, getAppointments, updateAppointment, deleteAppointment } from "../services/appointments";
 import { getPrescriptions } from "../services/prescriptions";
+import { getStaff } from "../services/staff";
 import { axiosInstance } from "../services/axiosInstance";
 import { normalizeRole, canAccessRoute, hasPermission as rbacHasPermission } from "../utils/rbac";
 
@@ -25,20 +26,43 @@ function StoreManagement({ children }) {
     const [isEditClick, setIsEditClick] = useState(false);
     const [selectedPatientData, setSelectedPatientData] = useState(null);
 
+    // Dynamic permissions state for staff members
+    const [staffPermissions, setStaffPermissions] = useState(() => {
+        try {
+            const raw = userString || localStorage.getItem("user");
+            if (!raw) return [];
+            const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+            const u = parsed?.data?.user || parsed?.user || parsed?.data?.staff || parsed?.staff || parsed?.data || parsed;
+            return Array.isArray(u?.permissions) ? u.permissions : [];
+        } catch {
+            return [];
+        }
+    });
+
     // Parse current logged-in user and role dynamically
     const currentUser = useMemo(() => {
         try {
             const raw = user || localStorage.getItem("user");
             if (!raw) return null;
             const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-            return parsed?.data?.user || parsed?.user || parsed?.data || parsed;
+            const baseUser = parsed?.data?.user || parsed?.user || parsed?.data?.patient || parsed?.patient || parsed?.data?.doctor || parsed?.doctor || parsed?.data?.staff || parsed?.staff || parsed?.data || parsed;
+            if (!baseUser) return null;
+
+            const perms = (Array.isArray(staffPermissions) && staffPermissions.length > 0)
+                ? staffPermissions
+                : (Array.isArray(baseUser.permissions) ? baseUser.permissions : []);
+
+            return {
+                ...baseUser,
+                permissions: perms,
+            };
         } catch {
             return null;
         }
-    }, [user]);
+    }, [user, staffPermissions]);
 
     const userRole = useMemo(() => {
-        const rawRole = currentUser?.role || currentUser?.employment || "admin";
+        const rawRole = currentUser?.role || currentUser?.employment || currentUser?.type || currentUser?.accountType || (currentUser?.patient ? 'patient' : null) || "admin";
         return normalizeRole(rawRole);
     }, [currentUser]);
 
@@ -200,6 +224,77 @@ function StoreManagement({ children }) {
         }
     }
 
+    const syncStaffPermissions = useCallback(async () => {
+        if (!token) return;
+        try {
+            const res = await getStaff(token);
+            const staffList = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+            if (!staffList.length) return;
+
+            const raw = localStorage.getItem('user');
+            const parsed = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
+            const cu = parsed?.data?.user || parsed?.user || parsed?.data?.staff || parsed?.staff || parsed?.data || parsed;
+
+            const email = (cu?.email || '').toLowerCase().trim();
+            const uid = String(cu?._id || cu?.id || '');
+            const name = (cu?.name || cu?.fullName || '').toLowerCase().trim();
+
+            const matched = staffList.find((s) => {
+                const sEmail = (s.email || '').toLowerCase().trim();
+                const sEmpId = String(s.employeeuserId || '');
+                const sId = String(s._id || s.id || '');
+                const sName = (s.fullName || s.name || '').toLowerCase().trim();
+
+                return (
+                    (email && sEmail && sEmail === email) ||
+                    (uid && sEmpId && sEmpId === uid) ||
+                    (uid && sId && sId === uid) ||
+                    (name && sName && sName === name)
+                );
+            });
+
+            if (matched && Array.isArray(matched.permissions)) {
+                // Prevent state update if permissions are identical
+                setStaffPermissions((prev) => {
+                    if (
+                        Array.isArray(prev) &&
+                        prev.length === matched.permissions.length &&
+                        prev.every((val, idx) => val === matched.permissions[idx])
+                    ) {
+                        return prev;
+                    }
+                    return matched.permissions;
+                });
+
+                // Update localStorage so rbac.js getCurrentUser() picks it up immediately
+                try {
+                    if (raw) {
+                        const parsedUser = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                        const applyUpdate = (target) => {
+                            if (target && typeof target === 'object') {
+                                target.permissions = matched.permissions;
+                                if (matched.employment) target.employment = matched.employment;
+                                if (matched.designation) target.designation = matched.designation;
+                            }
+                        };
+
+                        if (parsedUser.data?.user) applyUpdate(parsedUser.data.user);
+                        if (parsedUser.user) applyUpdate(parsedUser.user);
+                        if (parsedUser.data?.staff) applyUpdate(parsedUser.data.staff);
+                        if (parsedUser.staff) applyUpdate(parsedUser.staff);
+                        if (parsedUser.data && !parsedUser.data.user) applyUpdate(parsedUser.data);
+
+                        localStorage.setItem('user', JSON.stringify(parsedUser));
+                    }
+                } catch (e) {
+                    console.error('Error saving updated permissions to localStorage:', e);
+                }
+            }
+        } catch (error) {
+            console.warn('Could not sync staff permissions:', error);
+        }
+    }, [token]);
+
     useEffect(() => {
         if (!token) {
             setDashboardLoading(false);
@@ -211,7 +306,8 @@ function StoreManagement({ children }) {
             getAllPatience(),
             getAllDoctor(),
             getAllAppointments(),
-            getAllPrescriptions()
+            getAllPrescriptions(),
+            syncStaffPermissions()
         ]).finally(() => setDashboardLoading(false));
     }, [token]);
 
@@ -224,7 +320,8 @@ function StoreManagement({ children }) {
             Appointments, AppointmentCreate, getAllAppointments,
             Prescriptions, getAllPrescriptions, dashboardLoading, loading,
             setIsEditClick, isEditClick, AppointmentUpdate, AppointmentDelete,
-            setIsAuthenticated, isAuthenticated
+            setIsAuthenticated, isAuthenticated,
+            syncStaffPermissions, staffPermissions
         }}>
             {children}
         </ContextProvider.Provider>

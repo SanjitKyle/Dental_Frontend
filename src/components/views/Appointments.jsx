@@ -29,7 +29,8 @@ export const Appointments = () => {
   const appointmentsList = allAppointments.filter(apt => {
     const vType = (apt.visit_type || '').toLowerCase().trim();
     const sType = (apt.status || '').toLowerCase().trim();
-    const isFollowUp = sType === 'follow-up' ;
+    const isFollowUp = sType === 'follow-up' || sType === 'followup' || sType.includes('follow-up') || sType.includes('follow up') ||
+      vType === 'follow-up' || vType === 'followup' || vType.includes('follow-up') || vType.includes('follow up');
     return !isFollowUp;
   });
 

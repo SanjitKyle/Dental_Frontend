@@ -16,7 +16,7 @@ export const createAppointment = async (token, appointmentData) => {
 
 export const getAppointments = async (token) => {
     try {
-        const res = await axiosInstance.get("/appointments", {
+        const res = await axiosInstance.get("/appointments?all=true&limit=1000", {
             headers: {
                 authorization: `Bearer ${token}`
             }

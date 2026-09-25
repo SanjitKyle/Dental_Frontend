@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, CalendarDays, Pill, 
-  Clock
+  Clock, Stethoscope
 } from 'lucide-react';
 import { ContextProvider } from '../context/store';
 import { canAccessRoute, ROLES } from '../utils/rbac';
@@ -11,8 +11,9 @@ const MobileBottomNav = () => {
   const { userRole, currentUser } = useContext(ContextProvider);
 
   const rawNavItems = [
-    { id: 'dashboard', label: userRole === ROLES.PATIENT ? 'Home' : 'Home', icon: LayoutDashboard, path: '/dashboard' },
+    { id: 'dashboard', label: 'Home', icon: LayoutDashboard, path: '/dashboard' },
     { id: 'patients', label: 'Patients', icon: Users, path: '/patients' },
+    { id: 'doctors', label: 'Doctors', icon: Stethoscope, path: '/doctors' },
     { id: 'appointments', label: 'Appts', icon: CalendarDays, path: '/appointments' },
     { id: 'prescriptions', label: 'Rx', icon: Pill, path: '/prescriptions' },
     { id: 'follow-up', label: 'Follow Up', icon: Clock, path: '/follow-up' },

@@ -32,6 +32,12 @@ const formatDate = (val) => {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
+const formatDoctorDisplay = (name) => {
+  if (!name) return '';
+  const trimmed = name.trim();
+  return /^dr\.?\s+/i.test(trimmed) ? trimmed : `Dr. ${trimmed}`;
+};
+
 const STATUS_CONFIG = {
   'New': { label: 'New', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
   'Contacted': { label: 'Contacted', bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
@@ -577,7 +583,7 @@ export const Enquiries = () => {
                     <div>
                       <span className="text-slate-400 block text-[10px] uppercase font-bold">Doctor</span>
                       <span className="font-semibold text-slate-700 truncate block">
-                        {enquiry.preferredDoctorName || 'Not Assigned'}
+                        {formatDoctorDisplay(enquiry.preferredDoctorName) || 'Not Assigned'}
                       </span>
                     </div>
                   </div>
@@ -638,18 +644,18 @@ export const Enquiries = () => {
         </div>
 
         {/* 2. Desktop Table View (>= md) */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1024px]">
+        <div className="hidden md:block overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]">
+          <table className="w-full text-left border-collapse min-w-[1240px]">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-black uppercase tracking-wider text-slate-500">
-                <th className="py-3.5 px-5">Enquirer / Lead</th>
-                <th className="py-3.5 px-4">Contact</th>
-                <th className="py-3.5 px-4">Requested Service</th>
-                <th className="py-3.5 px-4">Preferred Slot</th>
-                <th className="py-3.5 px-4">Priority & Source</th>
-                <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4">Received</th>
-                <th className="py-3.5 px-5 text-right">Actions</th>
+                <th className="py-3.5 px-5 min-w-[210px]">Enquirer / Lead</th>
+                <th className="py-3.5 px-4 min-w-[150px]">Contact</th>
+                <th className="py-3.5 px-4 min-w-[210px]">Requested Service</th>
+                <th className="py-3.5 px-4 min-w-[150px]">Preferred Slot</th>
+                <th className="py-3.5 px-4 min-w-[140px]">Priority & Source</th>
+                <th className="py-3.5 px-4 min-w-[160px]">Status</th>
+                <th className="py-3.5 px-4 min-w-[120px]">Received</th>
+                <th className="py-3.5 px-5 text-right min-w-[170px]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
@@ -664,13 +670,13 @@ export const Enquiries = () => {
                       {/* Name & Avatar */}
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-black text-xs shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-black text-xs shrink-0 shadow-2xs">
                             {name.slice(0, 2).toUpperCase()}
                           </div>
-                          <div>
-                            <p className="font-bold text-slate-900 leading-snug">{name}</p>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-900 leading-snug whitespace-nowrap">{name}</p>
                             {enquiry.message && (
-                              <p className="text-xs text-slate-500 truncate max-w-[200px]" title={enquiry.message}>
+                              <p className="text-xs text-slate-500 truncate max-w-[210px]" title={enquiry.message}>
                                 {enquiry.message}
                               </p>
                             )}
@@ -679,13 +685,13 @@ export const Enquiries = () => {
                       </td>
 
                       {/* Contact Info */}
-                      <td className="py-4 px-4">
-                        <div className="space-y-0.5">
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="space-y-1">
                           <a
                             href={`tel:${enquiry.phone}`}
                             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-800 hover:text-indigo-600 transition-colors"
                           >
-                            <Phone className="w-3 h-3 text-slate-400" />
+                            <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             <span>{enquiry.phone || '—'}</span>
                           </a>
                           {enquiry.email && (
@@ -694,7 +700,7 @@ export const Enquiries = () => {
                               className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-600 transition-colors truncate max-w-[160px]"
                               title={enquiry.email}
                             >
-                              <Mail className="w-3 h-3 text-slate-400" />
+                              <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                               <span className="truncate">{enquiry.email}</span>
                             </a>
                           )}
@@ -703,27 +709,32 @@ export const Enquiries = () => {
 
                       {/* Service & Preferred Doctor */}
                       <td className="py-4 px-4">
-                        <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                          {enquiry.serviceRequested || enquiry.service || 'General Consultation'}
-                        </span>
-                        {enquiry.preferredDoctorName && (
-                          <div className="flex items-center gap-1 mt-1 text-xs text-slate-500 font-medium">
-                            <Stethoscope className="w-3 h-3 text-slate-400" />
-                            <span>Dr. {enquiry.preferredDoctorName}</span>
-                          </div>
-                        )}
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 whitespace-nowrap shadow-2xs">
+                            {enquiry.serviceRequested || enquiry.service || 'General Consultation'}
+                          </span>
+                          {enquiry.preferredDoctorName && (
+                            <div 
+                              className="flex items-center gap-1.5 text-xs text-slate-500 font-medium whitespace-nowrap"
+                              title={formatDoctorDisplay(enquiry.preferredDoctorName)}
+                            >
+                              <Stethoscope className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                              <span className="truncate max-w-[200px]">{formatDoctorDisplay(enquiry.preferredDoctorName)}</span>
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       {/* Preferred Date & Time */}
-                      <td className="py-4 px-4">
-                        <div className="space-y-0.5 text-xs text-slate-700">
-                          <div className="flex items-center gap-1 font-semibold">
-                            <Calendar className="w-3 h-3 text-slate-400" />
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="space-y-1 text-xs">
+                          <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                             <span>{formatDate(enquiry.preferredDate)}</span>
                           </div>
                           {enquiry.preferredTime && (
-                            <div className="flex items-center gap-1 text-slate-500">
-                              <Clock className="w-3 h-3 text-slate-400" />
+                            <div className="flex items-center gap-1.5 text-slate-500">
+                              <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                               <span>{enquiry.preferredTime}</span>
                             </div>
                           )}
@@ -731,26 +742,26 @@ export const Enquiries = () => {
                       </td>
 
                       {/* Priority & Source */}
-                      <td className="py-4 px-4">
-                        <div className="flex flex-col gap-1.5 items-start">
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-1 items-start">
                           <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-bold ${priorityCfg.bg} ${priorityCfg.text}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${priorityCfg.dot}`} />
                             {enquiry.priority || 'Medium'}
                           </span>
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">
+                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200/60">
                             {enquiry.source || 'Website'}
                           </span>
                         </div>
                       </td>
 
                       {/* Status with Quick Select */}
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-4 whitespace-nowrap">
                         {(canEdit || canManage) ? (
                           <div className="relative inline-block">
                             <select
                               value={enquiry.status || 'New'}
                               onChange={(e) => handleQuickStatusChange(enquiry, e.target.value)}
-                              className={`text-xs font-bold px-2.5 py-1 rounded-full border cursor-pointer outline-none transition-all ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border} focus:ring-2 focus:ring-indigo-500/20`}
+                              className={`text-xs font-bold px-3 py-1.5 rounded-full border cursor-pointer outline-none transition-all ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border} focus:ring-2 focus:ring-indigo-500/20 shadow-2xs whitespace-nowrap`}
                             >
                               {STATUSES.map((st) => (
                                 <option key={st} value={st} className="bg-white text-slate-800">
@@ -760,7 +771,7 @@ export const Enquiries = () => {
                             </select>
                           </div>
                         ) : (
-                          <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full border ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
+                          <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full border ${statusCfg.bg} ${statusCfg.text} ${statusCfg.border}`}>
                             {enquiry.status || 'New'}
                           </span>
                         )}
@@ -773,10 +784,10 @@ export const Enquiries = () => {
 
                       {/* Actions */}
                       <td className="py-4 px-5 text-right whitespace-nowrap">
-                        <div className="inline-flex items-center gap-1.5">
+                        <div className="inline-flex items-center gap-1.5 justify-end">
                           <button
                             onClick={() => setViewingEnquiry(enquiry)}
-                            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors cursor-pointer shadow-2xs"
                             title="View full enquiry details"
                           >
                             <Eye className="w-4 h-4" />
@@ -785,7 +796,7 @@ export const Enquiries = () => {
                           {canEdit && (
                             <button
                               onClick={() => handleOpenEdit(enquiry)}
-                              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors cursor-pointer shadow-2xs"
                               title="Edit enquiry"
                             >
                               <Edit3 className="w-4 h-4" />
@@ -796,7 +807,7 @@ export const Enquiries = () => {
                             enquiry.status !== 'Converted' ? (
                               <button
                                 onClick={() => handleConvert(enquiry)}
-                                className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                                className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
                                 title="Convert to active patient"
                               >
                                 <UserCheck className="w-3.5 h-3.5" />
@@ -812,7 +823,7 @@ export const Enquiries = () => {
                           {canDelete && (
                             <button
                               onClick={() => handleDelete(enquiry)}
-                              className="p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer shadow-2xs"
                               title="Delete enquiry"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -941,7 +952,7 @@ export const Enquiries = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-slate-500 font-medium">Preferred Doctor:</span>
                     <span className="text-xs font-bold text-slate-800">
-                      {viewingEnquiry.preferredDoctorName ? `Dr. ${viewingEnquiry.preferredDoctorName}` : 'Any Available Doctor'}
+                      {viewingEnquiry.preferredDoctorName ? formatDoctorDisplay(viewingEnquiry.preferredDoctorName) : 'Any Available Doctor'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -1128,7 +1139,7 @@ export const Enquiries = () => {
                       const dName = doc.full_name || doc.name;
                       return (
                         <option key={doc._id || doc.id} value={dName}>
-                          Dr. {dName} {doc.specialization ? `(${doc.specialization})` : ''}
+                          {formatDoctorDisplay(dName)} {doc.specialization ? `(${doc.specialization})` : ''}
                         </option>
                       );
                     })}

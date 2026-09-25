@@ -178,12 +178,20 @@ function App() {
                 <Route path="/patients/:id" element={<PatientDetail onEditPatient={openPatientModal} />} />
               </Route>
 
-              {/* Admin-Only Management Modules */}
-              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
+              {/* Doctors Directory: Admin, Doctor, Staff, Patient */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT]} />}>
                 <Route path="/doctors" element={<Doctors onAddDoctor={openDoctorModal} />} />
                 <Route path="/doctors/:id" element={<DoctorDetail onEditDoctor={openDoctorModal} />} />
+              </Route>
+
+              {/* Staff Management: Admin, Staff (staff requires MANAGE_STAFF permission via rbac) */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]} />}>
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/staff/:id" element={<StaffDetail />} />
+              </Route>
+
+              {/* Admin-Only Management Modules */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
                 <Route path="/settings" element={<EmptyView title="Settings" />} />
                 <Route path="/website" element={<EmptyView title="Website Management" />} />
               </Route>
@@ -194,13 +202,13 @@ function App() {
                 <Route path="/appointments/:id" element={<AppointmentDetail />} />
               </Route>
 
-              {/* Odontograms: Admin, Doctor, Staff */}
-              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF]} />}>
+              {/* Odontograms: Admin, Doctor, Staff, Patient */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT]} />}>
                 <Route path="/odontograms" element={<Odontograms />} />
               </Route>
 
-              {/* Prescriptions: Admin, Doctor, Patient */}
-              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.PATIENT]} />}>
+              {/* Prescriptions: Admin, Doctor, Staff, Patient */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT]} />}>
                 <Route path="/prescriptions" element={<Prescriptions />} />
               </Route>
 
@@ -209,18 +217,27 @@ function App() {
                 <Route path="/follow-up" element={<FollowUp />} />
               </Route>
 
-              {/* Enquiries: Admin, Staff */}
-              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]} />}>
+              {/* Enquiries: Admin, Staff, Patient */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF, ROLES.PATIENT]} />}>
                 <Route path="/enquiries" element={<Enquiries />} />
+              </Route>
+
+              {/* Enquiry follow-up: Admin, Staff */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]} />}>
                 <Route path="/enquiry-follow-up" element={<Enquiries />} />
               </Route>
 
-              {/* Other modules */}
+              {/* Billing: Admin, Staff, Patient */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF, ROLES.PATIENT]} />}>
+                <Route path="/billing" element={<Billing />} />
+              </Route>
+
+              {/* Inventory: Admin, Staff */}
               <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]} />}>
-                <Route path="/billing" element={<EmptyView title="Billing" />} />
                 <Route path="/inventory" element={<EmptyView title="Inventory" />} />
               </Route>
 
+              {/* Test Reports: Admin, Doctor, Staff, Patient */}
               <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT]} />}>
                 <Route path="/test-reports" element={<EmptyView title="Test Reports" />} />
               </Route>

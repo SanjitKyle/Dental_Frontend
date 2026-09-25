@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronRight,
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getStaff, createStaff, updateStaff, deleteStaff } from "../../services/staff";
 import { toast } from "react-toastify";
+import { ContextProvider } from "../../context/store";
 
 // ─── Token helper ─────────────────────────────────────────────────────────────
 const getToken = () => {
@@ -381,6 +382,7 @@ const StaffModal = ({ isOpen, onClose, onSave, initial }) => {
 // ─── Main Staff Page ──────────────────────────────────────────────────────────
 export const Staff = () => {
   const navigate = useNavigate();
+  const { syncStaffPermissions } = useContext(ContextProvider);
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [query, setQuery]         = useState("");
@@ -414,6 +416,9 @@ export const Staff = () => {
       toast.success("Staff member added!");
     }
     await fetchStaff();
+    if (syncStaffPermissions) {
+      syncStaffPermissions();
+    }
   };
 
   const handleDelete = async (id) => {

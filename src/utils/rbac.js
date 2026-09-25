@@ -23,6 +23,9 @@ const ROLE_ALIASES = {
   billing: ROLES.STAFF,
   patient: ROLES.PATIENT,
   patients: ROLES.PATIENT,
+  user: ROLES.PATIENT,
+  client: ROLES.PATIENT,
+  customer: ROLES.PATIENT,
 };
 
 /**
@@ -32,8 +35,8 @@ export const getCurrentUser = () => {
   try {
     const raw = localStorage.getItem('user');
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed?.data?.user || parsed?.user || parsed?.data || parsed;
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return parsed?.data?.user || parsed?.user || parsed?.data?.patient || parsed?.patient || parsed?.data?.doctor || parsed?.doctor || parsed?.data?.staff || parsed?.staff || parsed?.data || parsed;
   } catch {
     return null;
   }
@@ -51,9 +54,8 @@ export const normalizeRole = (role) => {
 /**
  * Returns the currently logged in user's normalized role
  */
-export const getUserRole = () => {
-  const user = getCurrentUser();
-  const rawRole = user?.role || user?.employment || 'admin';
+export const getUserRole = (user = getCurrentUser()) => {
+  const rawRole = user?.role || user?.employment || user?.type || user?.accountType || (user?.patient ? 'patient' : null) || 'admin';
   return normalizeRole(rawRole);
 };
 
@@ -72,16 +74,17 @@ export const isRoleAllowed = (role, allowedRoles = []) => {
 export const ROUTE_PERMISSIONS = {
   '/dashboard': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
   '/patients': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF],
-  '/doctors': [ROLES.ADMIN],
+  '/doctors': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
   '/appointments': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
-  '/odontograms': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF],
-  '/prescriptions': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.PATIENT],
+  '/odontograms': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
+  '/prescriptions': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
   '/follow-up': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF],
-  '/enquiries': [ROLES.ADMIN, ROLES.STAFF],
+  '/enquiries': [ROLES.ADMIN, ROLES.STAFF, ROLES.PATIENT],
   '/enquiry-follow-up': [ROLES.ADMIN, ROLES.STAFF],
-  '/staff': [ROLES.ADMIN],
-  '/billing': [ROLES.ADMIN, ROLES.STAFF],
+  '/staff': [ROLES.ADMIN, ROLES.STAFF],
+  '/billing': [ROLES.ADMIN, ROLES.STAFF, ROLES.PATIENT],
   '/test-reports': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
+  '/inventory': [ROLES.ADMIN, ROLES.STAFF],
 };
 
 /**
@@ -89,10 +92,13 @@ export const ROUTE_PERMISSIONS = {
  */
 export const STAFF_ROUTE_PERMISSIONS = {
   '/patients': ['VIEW_PATIENT', 'CREATE_PATIENT', 'EDIT_PATIENT', 'DELETE_PATIENT'],
-  '/appointments': ['VIEW_APPOINTMENT', 'CREATE_APPOINTMENT', 'EDIT_APPOINTMENT', 'CANCEL_APPOINTMENT'],
+  '/appointments': [
+    'VIEW_APPOINTMENT', 'CREATE_APPOINTMENT', 'EDIT_APPOINTMENT', 'CANCEL_APPOINTMENT',
+    'MANAGE_FOLLOW_UP', 'EDIT_FOLLOW_UP', 'DELETE_FOLLOW_UP'
+  ],
+  '/follow-up': ['MANAGE_FOLLOW_UP', 'EDIT_FOLLOW_UP', 'DELETE_FOLLOW_UP'],
   '/enquiries': ['VIEW_ENQUIRY', 'MANAGE_ENQUIRY', 'EDIT_ENQUIRY', 'DELETE_ENQUIRY'],
   '/enquiry-follow-up': ['VIEW_ENQUIRY', 'MANAGE_ENQUIRY', 'EDIT_ENQUIRY', 'DELETE_ENQUIRY'],
-  '/follow-up': ['MANAGE_FOLLOW_UP', 'EDIT_FOLLOW_UP', 'DELETE_FOLLOW_UP'],
   '/odontograms': ['VIEW_ODONTOGRAM', 'CREATE_ODONTOGRAM', 'EDIT_ODONTOGRAM', 'DELETE_ODONTOGRAM'],
   '/billing': ['PROCESS_BILLING'],
   '/staff': ['MANAGE_STAFF'],
@@ -110,7 +116,7 @@ export const hasPermission = (permission, user = getCurrentUser()) => {
   if (!user) return false;
   const role = normalizeRole(user?.role || user?.employment);
   
-  if (role === ROLES.ADMIN) return true;
+  if (role === ROLES.ADMIN || String(user?.employment || '').toUpperCase() === 'ADMIN') return true;
   
   if (role === ROLES.DOCTOR) {
     const doctorAllowed = [
@@ -127,8 +133,10 @@ export const hasPermission = (permission, user = getCurrentUser()) => {
   }
 
   // Staff: check assigned permissions from backend
-  const staffPermissions = Array.isArray(user?.permissions) ? user.permissions : [];
-  return staffPermissions.includes(permission);
+  const rawPerms = user?.permissions || user?.data?.permissions || user?.data?.user?.permissions || user?.staff?.permissions || [];
+  const staffPermissions = Array.isArray(rawPerms) ? rawPerms : [];
+  const permUpper = String(permission || '').toUpperCase().trim();
+  return staffPermissions.some((p) => String(p).toUpperCase().trim() === permUpper);
 };
 
 /**

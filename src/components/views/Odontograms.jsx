@@ -301,8 +301,46 @@ export const Odontograms = () => {
           </div>
         </div>
 
-        {/* ODONTOGRAM TABLE WITH PROPER SPACING & WRAPPING */}
-        <div className="overflow-x-auto w-full">
+        {/* Mobile List (< 768px) - Clean List with Patient Name & Chevron Only */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredList.length > 0 ? (
+            filteredList.map((item) => {
+              const initials = item.patientName
+                ? item.patientName.substring(0, 2).toUpperCase()
+                : 'PT';
+
+              return (
+                <div
+                  key={item._id}
+                  onClick={() => handleOpenEdit(item)}
+                  className="p-3.5 sm:p-4 flex items-center justify-between gap-3 bg-white hover:bg-slate-50 active:bg-blue-50/40 transition-colors cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 text-blue-700 flex items-center justify-center font-black text-sm shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                      {initials}
+                    </div>
+                    <h4 className="font-bold text-slate-900 text-sm capitalize truncate group-hover:text-blue-600 transition-colors">
+                      {item.patientName}
+                    </h4>
+                  </div>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-all shrink-0">
+                    <ChevronRight className="w-5 h-5" />
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-center py-12 text-slate-500 bg-slate-50/50 p-4">
+              <Search className="w-6 h-6 text-slate-400 mx-auto mb-2" />
+              <span className="text-xs font-bold uppercase tracking-wider">
+                No odontograms found {searchQuery ? `for "${searchQuery}"` : ""}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table (md+) */}
+        <div className="hidden md:block overflow-x-auto w-full">
           <table className="w-full text-left border-collapse min-w-[950px]">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/90 text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
@@ -456,8 +494,8 @@ export const Odontograms = () => {
           </table>
         </div>
 
-        {/* Clean Pagination Bar */}
-        <div className="p-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-50/80 gap-3">
+        {/* Clean Pagination Bar (Desktop only) */}
+        <div className="hidden md:flex p-4 border-t border-slate-200 flex-col sm:flex-row items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-50/80 gap-3">
           <div>Showing {filteredList.length} of {odontograms.length} records</div>
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">

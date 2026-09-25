@@ -1,8 +1,9 @@
 import React, { useContext, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search, ChevronDown, Clock, CheckCircle2, CalendarDays, Plus,
   User, Stethoscope, Phone, MessageSquare, Edit2, Trash2, X, Send,
-  AlertCircle, Filter, Calendar, Activity, Check, ArrowRight
+  AlertCircle, Filter, Calendar, Activity, Check, ArrowRight, ChevronRight
 } from 'lucide-react';
 import { ContextProvider } from '../../context/store';
 import AppointmentForm from '../AppointmentForm';
@@ -10,6 +11,7 @@ import { AppointmentKpi } from './SharedKpis';
 import { DataPageSkeleton } from '../DataPageSkeleton';
 
 export default function FollowUp() {
+  const navigate = useNavigate();
   const {
     Appointments: AppointmentsData,
     Patients,
@@ -47,12 +49,15 @@ export default function FollowUp() {
     return [];
   }, [Doctors]);
 
-  // Filtering exclusively for visit_type === 'Follow-up' (case-insensitive)
+  // Filtering for appointments where visit_type or status is Follow-up (case-insensitive)
   const followUpAppointments = useMemo(() => {
     return appointmentsList.filter((apt) => {
       const vType = (apt.visit_type || '').toLowerCase().trim();
       const sType = (apt.status || '').toLowerCase().trim();
-      return sType === 'follow-up' || sType === 'followup' || sType.includes('follow-up') || sType.includes('follow up');
+      return (
+        sType === 'follow-up' || sType === 'followup' || sType.includes('follow-up') || sType.includes('follow up') ||
+        vType === 'follow-up' || vType === 'followup' || vType.includes('follow-up') || vType.includes('follow up')
+      );
     });
   }, [appointmentsList]);
 
@@ -282,9 +287,43 @@ export default function FollowUp() {
               Book New Follow-Up
             </button>
           </div>
-        ) : viewMode === 'table' ? (
-          /* TABLE VIEW */
-          <div className="overflow-x-auto flex-1">
+        ) : (
+          <>
+            {/* Mobile List (< 768px) - Clean List with Patient Name & Chevron Only */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filteredList.map((apt) => {
+                const patientName = getPatientName(apt.patient);
+                const initials = patientName
+                  ? patientName.substring(0, 2).toUpperCase()
+                  : "NA";
+
+                return (
+                  <div
+                    key={apt._id || Math.random()}
+                    onClick={() => navigate(`/appointments/${apt._id || apt.id}`, { state: { appointment: apt } })}
+                    className="p-3.5 sm:p-4 flex items-center justify-between gap-3 bg-white hover:bg-slate-50 active:bg-indigo-50/40 transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                        {initials}
+                      </div>
+                      <h4 className="font-bold text-slate-900 text-sm capitalize truncate group-hover:text-indigo-600 transition-colors">
+                        {patientName}
+                      </h4>
+                    </div>
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full text-slate-400 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-all shrink-0">
+                      <ChevronRight className="w-5 h-5" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Views (md+) */}
+            <div className="hidden md:block flex-1">
+              {viewMode === 'table' ? (
+                /* TABLE VIEW */
+                <div className="overflow-x-auto flex-1">
             <table className="w-full text-left border-collapse min-w-[1050px]">
               <thead>
                 <tr className="border-b border-slate-100 text-[11px] font-black text-slate-400 uppercase tracking-wider bg-slate-50/80">
@@ -517,6 +556,9 @@ export default function FollowUp() {
             })}
           </div>
         )}
+      </div>
+    </>
+  )}
 
       </div>
 

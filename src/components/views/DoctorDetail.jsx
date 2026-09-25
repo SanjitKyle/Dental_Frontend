@@ -19,12 +19,13 @@ import {
 } from 'lucide-react';
 import { ContextProvider } from '../../context/store';
 import { DataPageSkeleton } from '../DataPageSkeleton';
+import { ROLES } from '../../utils/rbac';
 
 export const DoctorDetail = ({ onEditDoctor }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { Doctors, Appointments, Patients, setIsEditClick, setSelectedPatientData, DoctorDelete, loading } = useContext(ContextProvider);
+  const { Doctors, Appointments, Patients, setIsEditClick, setSelectedPatientData, DoctorDelete, loading, userRole } = useContext(ContextProvider);
 
   const [doctor, setDoctor] = useState(location.state?.doctor || null);
 
@@ -180,21 +181,23 @@ export const DoctorDetail = ({ onEditDoctor }) => {
             </div>
           </div>
 
-          {/* Action Buttons Row */}
-          <div className="grid grid-cols-2 gap-2.5 mt-4 pt-3.5 border-t border-slate-100">
-            <button
-              onClick={handleEdit}
-              className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs shadow-indigo-600/20 cursor-pointer"
-            >
-              <Edit className="w-3.5 h-3.5" /> Edit Doctor
-            </button>
-            <button
-              onClick={handleDelete}
-              className="w-full py-2.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Delete
-            </button>
-          </div>
+          {/* Action Buttons Row (Admin only) */}
+          {userRole === ROLES.ADMIN && (
+            <div className="grid grid-cols-2 gap-2.5 mt-4 pt-3.5 border-t border-slate-100">
+              <button
+                onClick={handleEdit}
+                className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs shadow-indigo-600/20 cursor-pointer"
+              >
+                <Edit className="w-3.5 h-3.5" /> Edit Doctor
+              </button>
+              <button
+                onClick={handleDelete}
+                className="w-full py-2.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Delete
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Quick KPI Stat Tiles */}
