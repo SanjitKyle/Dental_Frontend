@@ -38,6 +38,32 @@ export const PatientDetail = ({ onEditPatient }) => {
   } = useContext(ContextProvider);
 
   const [patient, setPatient] = useState(location.state?.patient || null);
+  const [alerts, setAlerts] = useState(() => {
+    const saved = localStorage.getItem(`patient_alerts_${id}`);
+    return saved ? JSON.parse(saved) : ['⚠️ Penicillin Allergy', '🩺 Type-2 Diabetic (Delayed Healing Risk)', '🩸 On Blood Thinners'];
+  });
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [customAlert, setCustomAlert] = useState('');
+
+  const handleToggleAlert = (alertText) => {
+    let updated;
+    if (alerts.includes(alertText)) {
+      updated = alerts.filter(a => a !== alertText);
+    } else {
+      updated = [...alerts, alertText];
+    }
+    setAlerts(updated);
+    localStorage.setItem(`patient_alerts_${id}`, JSON.stringify(updated));
+  };
+
+  const handleAddCustomAlert = (e) => {
+    e.preventDefault();
+    if (!customAlert.trim()) return;
+    const updated = [...alerts, `⚠️ ${customAlert.trim()}`];
+    setAlerts(updated);
+    localStorage.setItem(`patient_alerts_${id}`, JSON.stringify(updated));
+    setCustomAlert('');
+  };
 
   useEffect(() => {
     if (!patient || String(patient._id || patient.id) !== String(id)) {
@@ -219,6 +245,44 @@ export const PatientDetail = ({ onEditPatient }) => {
             >
               <Trash2 className="w-3.5 h-3.5" /> Delete
             </button>
+          </div>
+        </div>
+
+        {/* Critical Medical Alerts & Allergy Warning Strip */}
+        <div className="bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 border-2 border-rose-200 rounded-3xl p-4 sm:p-5 shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex h-3 w-3 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+              </span>
+              <h3 className="text-xs font-black text-rose-950 uppercase tracking-wider flex items-center gap-1.5">
+                <ShieldAlert className="w-4 h-4 text-rose-600" />
+                Critical Medical Alerts &amp; Medico-Legal Allergy Flags
+              </h3>
+            </div>
+            <button
+              onClick={() => setIsAlertModalOpen(true)}
+              className="text-[11px] font-black text-rose-700 hover:text-rose-900 bg-white/80 border border-rose-200 px-3 py-1 rounded-xl shadow-2xs transition-all cursor-pointer"
+            >
+              + Manage Medical Alerts
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-1">
+            {alerts.length === 0 ? (
+              <span className="text-xs font-bold text-slate-400 italic">No medical alerts or drug allergies recorded for this patient.</span>
+            ) : (
+              alerts.map((al, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-300 text-rose-950 rounded-xl text-xs font-black shadow-2xs"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
+                  {al}
+                </span>
+              ))
+            )}
           </div>
         </div>
 
@@ -421,6 +485,87 @@ export const PatientDetail = ({ onEditPatient }) => {
               <p className="text-xs font-medium text-slate-700 whitespace-pre-wrap leading-relaxed">
                 {patient.note}
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Manage Medical Alerts & Allergies Modal */}
+        {isAlertModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto animate-[fadeIn_0.15s_ease-out]">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden my-auto border border-slate-100 flex flex-col">
+              <div className="px-6 py-4 bg-rose-600 text-white flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5" />
+                  <h3 className="text-sm font-black">Manage Medico-Legal Clinical Alerts</h3>
+                </div>
+                <button onClick={() => setIsAlertModalOpen(false)} className="text-white/80 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4 text-xs">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1.5 uppercase text-[10px] tracking-wider">
+                    Quick Clinical Presets (Click to Toggle)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      '⚠️ Penicillin Allergy',
+                      '🩺 Type-2 Diabetic',
+                      '🩸 On Blood Thinners (Aspirin)',
+                      '💓 Cardiac Pacemaker',
+                      '🫁 Asthma / Respiratory',
+                      '💉 Local Anesthesia Allergy',
+                      '🤰 Pregnant (1st Trimester)',
+                      '🩹 High Blood Pressure'
+                    ].map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleToggleAlert(preset)}
+                        className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs cursor-pointer border ${
+                          alerts.includes(preset)
+                            ? 'bg-rose-600 text-white border-rose-600 shadow-2xs'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <form onSubmit={handleAddCustomAlert} className="pt-2 border-t border-slate-100 space-y-2">
+                  <label className="font-bold text-slate-700 block uppercase text-[10px] tracking-wider">
+                    Add Custom Medical Flag or Allergy
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="e.g. Sulfa drugs, Hepatitis B, Latex allergy..."
+                      value={customAlert}
+                      onChange={(e) => setCustomAlert(e.target.value)}
+                      className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:outline-none focus:border-rose-600 focus:bg-white"
+                    />
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black shadow-xs cursor-pointer"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </form>
+
+                <div className="pt-3 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsAlertModalOpen(false)}
+                    className="px-5 py-2 bg-slate-900 text-white rounded-xl font-black hover:bg-slate-800 cursor-pointer"
+                  >
+                    Done &bull; Save Alerts
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

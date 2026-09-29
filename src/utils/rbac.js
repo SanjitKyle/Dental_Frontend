@@ -73,6 +73,7 @@ export const isRoleAllowed = (role, allowedRoles = []) => {
  */
 export const ROUTE_PERMISSIONS = {
   '/dashboard': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
+  '/queue': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
   '/patients': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF],
   '/doctors': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
   '/appointments': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
@@ -83,6 +84,8 @@ export const ROUTE_PERMISSIONS = {
   '/enquiry-follow-up': [ROLES.ADMIN, ROLES.STAFF],
   '/staff': [ROLES.ADMIN, ROLES.STAFF],
   '/billing': [ROLES.ADMIN, ROLES.STAFF, ROLES.PATIENT],
+  '/treatments': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
+  '/lab-tracker': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF],
   '/test-reports': [ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT],
   '/inventory': [ROLES.ADMIN, ROLES.STAFF],
 };

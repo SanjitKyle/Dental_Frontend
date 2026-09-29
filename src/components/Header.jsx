@@ -1,16 +1,37 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
-import { Menu, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Menu, ChevronDown, Ticket, Plus } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PopupModel from './logoutpop';
 import { ContextProvider } from '../context/store';
 import { ROLES } from '../utils/rbac';
+import { loadQueueFromStorage, saveQueueToStorage, QUEUE_STATUS } from '../services/queueStorage';
+import { IssueTokenModal } from './queue/IssueTokenModal';
 
 const Header = ({ onLogout, onToggleMobileSidebar }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser, userRole } = useContext(ContextProvider);
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isHeaderIssueModalOpen, setIsHeaderIssueModalOpen] = useState(false);
+  const [waitingCount, setWaitingCount] = useState(0);
   const profileContainerRef = useRef(null);
+
+  // Sync live waiting count from queue
+  useEffect(() => {
+    const syncCount = () => {
+      try {
+        const q = loadQueueFromStorage();
+        const count = q.filter((i) => i.status === QUEUE_STATUS.WAITING).length;
+        setWaitingCount(count);
+      } catch (e) {
+        setWaitingCount(0);
+      }
+    };
+    syncCount();
+    window.addEventListener('clinicQueueUpdated', syncCount);
+    return () => window.removeEventListener('clinicQueueUpdated', syncCount);
+  }, []);
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -107,6 +128,47 @@ const Header = ({ onLogout, onToggleMobileSidebar }) => {
       </div>
 
       {/* ========================================================================= */}
+      {/* MIDDLE: Quick OPD Token Queue Navigation & Quick Check-in                  */}
+      {/* ========================================================================= */}
+      <div className="flex items-center gap-2">
+        {/* Token Queue Navigation Tab */}
+        <button
+          onClick={() => navigate('/queue')}
+          className={`flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+            location.pathname === '/queue'
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/25'
+              : 'bg-white hover:bg-indigo-50/70 text-slate-700 hover:text-indigo-600 border-slate-200/90 hover:border-indigo-200'
+          }`}
+          title="Open Daily Clinic OPD & Token Queue"
+        >
+          <span className="text-sm">🎟️</span>
+          <span className="font-extrabold">OPD Queue</span>
+          {waitingCount > 0 && (
+            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+              location.pathname === '/queue'
+                ? 'bg-white text-indigo-700'
+                : 'bg-amber-100 text-amber-800'
+            }`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              {waitingCount} <span className="hidden md:inline font-semibold">waiting</span>
+            </span>
+          )}
+        </button>
+
+        {/* Quick Issue Token Button (Staff, Admin, Doctor) */}
+        {userRole !== ROLES.PATIENT && (
+          <button
+            onClick={() => setIsHeaderIssueModalOpen(true)}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md hover:shadow-indigo-600/20 transition-all cursor-pointer"
+            title="Issue OPD Token for Walk-in Patient"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Issue Token</span>
+          </button>
+        )}
+      </div>
+
+      {/* ========================================================================= */}
       {/* RIGHT: Elevated User Profile Card                                          */}
       {/* ========================================================================= */}
       <div className="flex items-center gap-2 sm:gap-3">
@@ -149,6 +211,18 @@ const Header = ({ onLogout, onToggleMobileSidebar }) => {
           )}
         </div>
       </div>
+
+      {/* Global Issue Token Modal triggered from Header */}
+      <IssueTokenModal
+        isOpen={isHeaderIssueModalOpen}
+        onClose={() => setIsHeaderIssueModalOpen(false)}
+        onTokenCreated={(newToken) => {
+          const current = loadQueueFromStorage();
+          saveQueueToStorage([newToken, ...current]);
+          navigate('/queue');
+        }}
+        currentQueue={loadQueueFromStorage()}
+      />
     </header>
   );
 };

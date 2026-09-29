@@ -14,6 +14,7 @@ import { Settings } from "./components/views/Settings";
 import { EmptyView } from "./components/views/EmptyView";
 import { Odontograms } from "./components/views/Odontograms";
 import { Prescriptions } from "./components/views/Prescriptions";
+import { PatientQueue } from "./components/views/PatientQueue";
 import PatientFormModal from "./components/PatientFormModal";
 import DoctorFormModal from "./components/DoctorFormModal";
 import Login from "./components/Login";
@@ -27,6 +28,7 @@ import { StaffDetail } from "./components/views/StaffDetail";
 import { AppointmentDetail } from "./components/views/AppointmentDetail";
 import { Enquiries } from "./components/views/Enquiries";
 import Unauthorized from "./components/views/Unauthorized";
+import { LabTracker } from "./components/views/LabTracker";
 import MobileBottomNav from "./components/MobileBottomNav";
 import RoleRoute from "./components/RoleRoute";
 import { ROLES } from "./utils/rbac";
@@ -172,6 +174,11 @@ function App() {
               <Route path="/dashboard" element={<Dashboard onAddPatient={openPatientModal} onAddDoctor={openDoctorModal} />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
 
+              {/* Daily Clinic OPD Queue & Tokens: Admin, Doctor, Staff, Patient */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT]} />}>
+                <Route path="/queue" element={<PatientQueue />} />
+              </Route>
+
               {/* Patients: Admin, Doctor, Staff */}
               <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF]} />}>
                 <Route path="/patients" element={<Patients onAddPatient={openPatientModal} />} />
@@ -230,6 +237,16 @@ function App() {
               {/* Billing: Admin, Staff, Patient */}
               <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF, ROLES.PATIENT]} />}>
                 <Route path="/billing" element={<Billing />} />
+              </Route>
+
+              {/* Treatment Plans & Quotations: Admin, Doctor, Staff, Patient */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF, ROLES.PATIENT]} />}>
+                <Route path="/treatments" element={<Treatments />} />
+              </Route>
+
+              {/* Dental Lab Work Tracker: Admin, Doctor, Staff */}
+              <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN, ROLES.DOCTOR, ROLES.STAFF]} />}>
+                <Route path="/lab-tracker" element={<LabTracker />} />
               </Route>
 
               {/* Inventory: Admin, Staff */}

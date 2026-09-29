@@ -73,18 +73,26 @@ export const PrescriptionPrintModal = ({
         <!DOCTYPE html>
         <html>
         <head>
-          <title>&nbsp;</title>
+          <title>Prescription_${rxNumber}</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
           <style>
             @page {
               size: A4 portrait;
-              margin: 12mm 15mm 12mm 15mm;
+              margin: 10mm 12mm 10mm 12mm;
+            }
+            * {
+              box-sizing: border-box;
             }
             body {
               margin: 0;
               padding: 0;
               background: #ffffff;
               color: #0f172a;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+              font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
           </style>
         </head>
@@ -102,25 +110,30 @@ export const PrescriptionPrintModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-[fadeIn_0.2s_ease-out]">
-      <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[95vh] my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto animate-[fadeIn_0.2s_ease-out]">
+      <div className="bg-white w-full max-w-3xl rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[96vh] my-auto">
 
         {/* Top Modal Controls */}
-        <div className="px-6 py-3.5 bg-slate-900 text-white flex items-center justify-between print:hidden">
-          <div className="flex items-center gap-2">
-            <Pill className="w-5 h-5 text-blue-400" />
-            <span className="font-bold text-sm">Prescription Letterhead ({rxNumber})</span>
+        <div className="px-6 py-3.5 bg-slate-900 text-white flex items-center justify-between shrink-0 shadow-md">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-400">
+              <Pill className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-sm text-white">Prescription Letterhead</span>
+              <span className="text-xs font-mono font-bold text-slate-400 ml-2">({rxNumber})</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center gap-2 shadow-md shadow-blue-600/30 transition-all cursor-pointer"
             >
               <Printer className="w-4 h-4" /> Print Rx / Save PDF
             </button>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -128,28 +141,55 @@ export const PrescriptionPrintModal = ({
         </div>
 
         {/* PRINTABLE LETTERHEAD AREA */}
-        <div className="p-8 md:p-12 overflow-y-auto bg-white text-slate-900">
-          <div ref={printRef} style={{ width: '100%', maxWidth: '100%', margin: '0 auto', fontFamily: 'Segoe UI, Arial, sans-serif' }}>
+        <div className="p-6 sm:p-10 overflow-y-auto bg-white text-slate-900">
+          <div
+            ref={printRef}
+            style={{
+              width: '100%',
+              maxWidth: '100%',
+              margin: '0 auto',
+              fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+              color: '#0f172a'
+            }}
+          >
 
-            {/* Header: Doctor on Left, Clinic on Right */}
-            <table style={{ width: '100%', borderBottom: '2px solid #0f172a', paddingBottom: '10px', marginBottom: '12px' }}>
+            {/* 1. Executive Clinic & Doctor Letterhead Header */}
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8px' }}>
               <tbody>
                 <tr>
-                  <td style={{ verticalAlign: 'top', width: '55%' }}>
-                    <table style={{ width: '100%' }}>
+                  {/* Doctor Info Left */}
+                  <td style={{ verticalAlign: 'top', width: '58%', paddingBottom: '10px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <tbody>
                         <tr>
-                          <td style={{ width: '42px', verticalAlign: 'top' }}>
-                            <div style={{ width: '36px', height: '36px', backgroundColor: '#059669', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: '900', fontSize: '20px', lineHeight: '36px', textAlign: 'center' }}>
+                          <td style={{ width: '46px', verticalAlign: 'top' }}>
+                            <div style={{
+                              width: '40px',
+                              height: '40px',
+                              background: 'linear-gradient(135deg, #0284c7 0%, #0d9488 100%)',
+                              borderRadius: '10px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#ffffff',
+                              fontWeight: '900',
+                              fontSize: '22px',
+                              lineHeight: '40px',
+                              textAlign: 'center',
+                              boxShadow: '0 2px 4px rgba(2, 132, 199, 0.2)'
+                            }}>
                               ✚
                             </div>
                           </td>
-                          <td style={{ verticalAlign: 'top', paddingLeft: '8px' }}>
-                            <div style={{ fontSize: '18px', fontWeight: '800', color: '#0284c7', lineHeight: '1.2' }}>
-                              {doctorName}
+                          <td style={{ verticalAlign: 'top', paddingLeft: '10px' }}>
+                            <div style={{ fontSize: '20px', fontWeight: '800', color: '#0f2942', letterSpacing: '-0.3px', lineHeight: '1.2' }}>
+                              {doctorName.startsWith('Dr.') ? doctorName : `Dr. ${doctorName}`}
                             </div>
-                            <div style={{ fontSize: '11px', fontWeight: '700', color: '#334155', marginTop: '2px' }}>
-                              {doctorQual} | Reg. No: {doctorReg}
+                            <div style={{ fontSize: '11px', fontWeight: '700', color: '#0d9488', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                              {doctorQual}
+                            </div>
+                            <div style={{ fontSize: '10px', fontWeight: '600', color: '#64748b', marginTop: '1px' }}>
+                              Reg. No: <span style={{ fontFamily: 'monospace', fontWeight: '800', color: '#334155' }}>{doctorReg}</span> &bull; State Dental Council
                             </div>
                           </td>
                         </tr>
@@ -157,68 +197,179 @@ export const PrescriptionPrintModal = ({
                     </table>
                   </td>
 
-                  <td style={{ verticalAlign: 'top', width: '45%', textAlign: 'right' }}>
-                    <div style={{ fontSize: '17px', fontWeight: '800', color: '#0284c7', lineHeight: '1.2' }}>
+                  {/* Clinic Info Right */}
+                  <td style={{ verticalAlign: 'top', width: '42%', textAlign: 'right', paddingBottom: '10px' }}>
+                    <div style={{ fontSize: '18px', fontWeight: '800', color: '#0284c7', letterSpacing: '-0.2px', lineHeight: '1.2' }}>
                       {clinicName}
                     </div>
                     <div style={{ fontSize: '11px', fontWeight: '600', color: '#475569', marginTop: '2px' }}>
                       {clinicAddress}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>
-                      Ph: {clinicPhone}, Timing: {clinicTiming}
+                    <div style={{ fontSize: '10px', color: '#64748b', marginTop: '1px', lineHeight: '1.4' }}>
+                      📞 {clinicPhone} <br />
+                      ⏰ {clinicTiming}
                     </div>
                   </td>
                 </tr>
               </tbody>
             </table>
 
-            {/* Date Line */}
-            <table style={{ width: '100%', marginBottom: '10px' }}>
+            {/* Gradient Accent Rule */}
+            <div style={{
+              height: '3px',
+              background: 'linear-gradient(90deg, #0284c7 0%, #0d9488 50%, #3b82f6 100%)',
+              borderRadius: '2px',
+              marginBottom: '12px'
+            }} />
+
+            {/* Date & Rx Identifier Strip */}
+            <table style={{ width: '100%', marginBottom: '12px', fontSize: '11px' }}>
               <tbody>
                 <tr>
-                  <td style={{ textAlign: 'right', fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>
-                    Date: {rxDate}
+                  <td style={{ textAlign: 'left', fontWeight: '700', color: '#64748b' }}>
+                    Prescription ID: <span style={{ fontFamily: 'monospace', fontWeight: '800', color: '#0f172a' }}>{rxNumber}</span>
+                  </td>
+                  <td style={{ textAlign: 'right', fontWeight: '800', color: '#0f172a' }}>
+                    <span style={{ color: '#64748b', fontWeight: '600' }}>Date of Consultation:</span> {rxDate}
                   </td>
                 </tr>
               </tbody>
             </table>
 
-            {/* Patient Details Block */}
-            <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 14px', marginBottom: '14px', fontSize: '12px', lineHeight: '1.5' }}>
-              <div style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a', marginBottom: '2px' }}>
-                ID: {prescription.patientId?._id?.slice(-4) || '14'} - {patientName.toUpperCase()} ({patientGender}) / {patientAge} Y
+            {/* 2. Patient Demographics & Clinical Summary Card */}
+            <div style={{
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderLeft: '4px solid #0284c7',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              marginBottom: '16px',
+              fontSize: '11px',
+              lineHeight: '1.6'
+            }}>
+              {/* Row 1: Patient Name, ID, Age/Sex */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px' }}>
+                <tbody>
+                  <tr>
+                    <td style={{ verticalAlign: 'top', width: '65%' }}>
+                      <span style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Patient Details:
+                      </span>{' '}
+                      <span style={{ fontSize: '14px', fontWeight: '900', color: '#0f172a' }}>
+                        {patientName.toUpperCase()}
+                      </span>{' '}
+                      <span style={{ fontWeight: '800', color: '#0284c7' }}>
+                        ({patientGender}) / {patientAge} Yrs
+                      </span>
+                    </td>
+                    <td style={{ verticalAlign: 'top', width: '35%', textAlign: 'right' }}>
+                      <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '700' }}>UHID / ID: </span>
+                      <span style={{ fontFamily: 'monospace', fontWeight: '800', color: '#0f172a' }}>
+                        {prescription.patientId?._id?.slice(-6) || '14'}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Row 2: Vitals Badges */}
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+                padding: '6px 0',
+                borderTop: '1px dashed #e2e8f0',
+                borderBottom: '1px dashed #e2e8f0',
+                color: '#334155',
+                fontWeight: '600',
+                fontSize: '11px'
+              }}>
+                <span>⚖️ <strong>Weight:</strong> {patientWeight} kg</span>
+                <span style={{ color: '#cbd5e1' }}>&bull;</span>
+                <span>📏 <strong>Height:</strong> {patientHeight} cm</span>
+                <span style={{ color: '#cbd5e1' }}>&bull;</span>
+                <span>🩺 <strong>BP:</strong> {patientBP}</span>
+                <span style={{ color: '#cbd5e1' }}>&bull;</span>
+                <span>📍 <strong>Address:</strong> {patientAddress}</span>
               </div>
-              <div style={{ color: '#334155', fontWeight: '500' }}>
-                Address: {patientAddress}
+
+              {/* Row 3: Diagnosis & Tooth Numbers */}
+              <div style={{ paddingTop: '6px' }}>
+                <span style={{ fontWeight: '800', color: '#0f172a' }}>Clinical Diagnosis: </span>
+                <span style={{
+                  display: 'inline-block',
+                  backgroundColor: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  color: '#1d4ed8',
+                  fontWeight: '800',
+                  padding: '1px 8px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  marginRight: '8px'
+                }}>
+                  * {Array.isArray(prescription.diagnosis) ? prescription.diagnosis.join(', ') : (prescription.diagnosis || 'General Dental Evaluation')}
+                </span>
+
+                {prescription.toothNumbers && prescription.toothNumbers.length > 0 && (
+                  <span style={{
+                    display: 'inline-block',
+                    backgroundColor: '#ecfdf5',
+                    border: '1px solid #a7f3d0',
+                    color: '#065f46',
+                    fontWeight: '800',
+                    padding: '1px 8px',
+                    borderRadius: '4px',
+                    fontSize: '11px'
+                  }}>
+                    🦷 Teeth (FDI): #{prescription.toothNumbers.join(', #')}
+                  </span>
+                )}
               </div>
-              <div style={{ color: '#334155', fontWeight: '500' }}>
-                Weight(kg): {patientWeight}, Height(cms): {patientHeight}, BP: {patientBP}
-              </div>
-              <div style={{ color: '#334155', fontWeight: '500' }}>
-                Referred By: Self / {doctorName}
-              </div>
-              <div style={{ fontWeight: '700', color: '#0f172a', marginTop: '3px' }}>
-                Diagnosis: <span style={{ fontWeight: '800', color: '#1e40af' }}>* {Array.isArray(prescription.diagnosis) ? prescription.diagnosis.join(', ') : (prescription.diagnosis || 'General Dental Evaluation')}</span>
-              </div>
-              {prescription.toothNumbers && prescription.toothNumbers.length > 0 && (
-                <div style={{ color: '#1e40af', fontWeight: '700' }}>
-                  Teeth Involved (FDI): #{prescription.toothNumbers.join(', #')}
-                </div>
-              )}
             </div>
 
-            {/* Rx Symbol */}
-            <div style={{ fontSize: '20px', fontWeight: '900', fontFamily: 'serif', fontStyle: 'italic', color: '#0f172a', marginTop: '12px', marginBottom: '4px' }}>
-              ℞
+            {/* 3. Classical Rx Symbol Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginTop: '10px',
+              marginBottom: '8px'
+            }}>
+              <span style={{
+                fontSize: '28px',
+                fontWeight: '900',
+                fontFamily: "'Times New Roman', Georgia, serif",
+                color: '#0284c7',
+                lineHeight: '1'
+              }}>
+                ℞
+              </span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
+              <span style={{ fontSize: '10px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                Medication Order &bull; Take as directed
+              </span>
             </div>
 
-            {/* Exact 3-Column Medicine Table */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px', fontSize: '12px' }}>
+            {/* 4. Medications Table */}
+            <table style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              marginBottom: '16px',
+              fontSize: '11px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              overflow: 'hidden'
+            }}>
               <thead>
-                <tr style={{ borderTop: '2px solid #0f172a', borderBottom: '2px solid #0f172a', backgroundColor: '#f8fafc' }}>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', fontWeight: '800', width: '42%' }}>Medicine Name</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', fontWeight: '800', width: '38%' }}>Dosage</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', fontWeight: '800', width: '20%' }}>Duration</th>
+                <tr style={{
+                  backgroundColor: '#0f2942',
+                  color: '#ffffff',
+                  textAlign: 'left'
+                }}>
+                  <th style={{ padding: '8px 10px', fontWeight: '800', width: '38px', textAlign: 'center' }}>#</th>
+                  <th style={{ padding: '8px 10px', fontWeight: '800', width: '45%' }}>Medicine Name &amp; Composition</th>
+                  <th style={{ padding: '8px 10px', fontWeight: '800', width: '35%' }}>Dosage &amp; Timing</th>
+                  <th style={{ padding: '8px 10px', fontWeight: '800', width: '15%', textAlign: 'right' }}>Duration</th>
                 </tr>
               </thead>
               <tbody>
@@ -231,35 +382,65 @@ export const PrescriptionPrintModal = ({
                   const qty = m.quantity ? `(Total: ${m.quantity} ${formPrefix === 'TAB' ? 'Tabs' : formPrefix === 'CAP' ? 'Caps' : 'Units'})` : '';
 
                   return (
-                    <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '8px 6px', verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: '800', color: '#0f172a', fontSize: '13px' }}>
-                          {idx + 1}) {formPrefix}. {m.medicineName.toUpperCase()} {m.strength ? `(${m.strength})` : ''}
+                    <tr
+                      key={idx}
+                      style={{
+                        backgroundColor: idx % 2 === 1 ? '#f8fafc' : '#ffffff',
+                        borderBottom: '1px solid #e2e8f0'
+                      }}
+                    >
+                      {/* Sr Number */}
+                      <td style={{ padding: '10px 8px', verticalAlign: 'top', textAlign: 'center', fontWeight: '800', color: '#64748b' }}>
+                        {idx + 1}
+                      </td>
+
+                      {/* Medicine & Generic Name */}
+                      <td style={{ padding: '10px 10px', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: '900', color: '#0f172a', fontSize: '13px', letterSpacing: '-0.2px' }}>
+                          <span style={{ color: '#0284c7', marginRight: '4px' }}>{formPrefix}.</span>
+                          {m.medicineName.toUpperCase()} {m.strength ? `(${m.strength})` : ''}
                         </div>
                         {m.genericName && (
-                          <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic', paddingLeft: '14px' }}>
-                            {m.genericName}
+                          <div style={{ fontSize: '10px', color: '#64748b', fontStyle: 'italic', marginTop: '1px' }}>
+                            Composition: {m.genericName}
                           </div>
                         )}
                         {m.instructions && (
-                          <div style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: '600', paddingLeft: '14px', marginTop: '2px' }}>
-                            Note: {m.instructions}
+                          <div style={{
+                            display: 'inline-block',
+                            fontSize: '10px',
+                            color: '#1d4ed8',
+                            fontWeight: '700',
+                            backgroundColor: '#eff6ff',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            marginTop: '4px'
+                          }}>
+                            💡 {m.instructions}
                           </div>
                         )}
                       </td>
 
-                      <td style={{ padding: '8px 6px', verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: '700', color: '#1e293b' }}>
-                          {m.dosage || '1 dose'}, {freq}
+                      {/* Dosage Schedule */}
+                      <td style={{ padding: '10px 10px', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: '800', color: '#0f172a', fontSize: '12px' }}>
+                          {m.dosage || '1 dose'} &bull; <span style={{ color: '#0d9488' }}>{freq}</span>
                         </div>
-                        <div style={{ fontSize: '11px', color: '#475569' }}>
-                          ({timing})
+                        <div style={{ fontSize: '10px', fontWeight: '700', color: '#475569', marginTop: '2px' }}>
+                          🍽️ {timing}
                         </div>
                       </td>
 
-                      <td style={{ padding: '8px 6px', verticalAlign: 'top', fontWeight: '700', color: '#0f172a' }}>
-                        <div>{durationVal} {durationUnit}</div>
-                        {qty && <div style={{ fontSize: '10px', color: '#64748b', fontWeight: '400' }}>{qty}</div>}
+                      {/* Duration */}
+                      <td style={{ padding: '10px 10px', verticalAlign: 'top', textAlign: 'right' }}>
+                        <div style={{ fontWeight: '900', color: '#0f172a', fontSize: '12px' }}>
+                          {durationVal} {durationUnit}
+                        </div>
+                        {qty && (
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: '600', marginTop: '2px' }}>
+                            {qty}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -267,48 +448,110 @@ export const PrescriptionPrintModal = ({
               </tbody>
             </table>
 
-            {/* Advice Given */}
-            <div style={{ paddingTop: '8px', borderTop: '1px solid #cbd5e1', fontSize: '12px', lineHeight: '1.5' }}>
-              <div style={{ fontWeight: '800', color: '#0f172a', marginBottom: '2px' }}>Advice Given:</div>
-              <div style={{ color: '#1e293b', paddingLeft: '8px' }}>
-                * {prescription.generalAdvice || 'Maintain oral hygiene. Avoid chewing on affected side.'}
+            {/* 5. Clinical Advice & Dietary Precautions */}
+            <div style={{
+              backgroundColor: '#fafaf9',
+              border: '1px solid #e7e5e4',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              marginBottom: '16px',
+              fontSize: '11px',
+              lineHeight: '1.6'
+            }}>
+              <div style={{ fontWeight: '800', color: '#0f172a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>
+                📋 General Clinical Advice &amp; Instructions:
+              </div>
+              <div style={{ color: '#334155', paddingLeft: '4px' }}>
+                &bull; {prescription.generalAdvice || 'Maintain strict oral hygiene. Avoid chewing hard, crunchy, or very hot foods on the affected tooth side.'}
               </div>
               {prescription.diagnosticTestsAdvised && prescription.diagnosticTestsAdvised.length > 0 && (
-                <div style={{ color: '#1e293b', paddingLeft: '8px' }}>
-                  * Tests Advised: {prescription.diagnosticTestsAdvised.join(', ')}
+                <div style={{ color: '#1d4ed8', fontWeight: '700', paddingLeft: '4px', marginTop: '3px' }}>
+                  &bull; Diagnostic Radiographs / Investigations Advised: {prescription.diagnosticTestsAdvised.join(', ')}
                 </div>
               )}
             </div>
 
-            {/* Next Follow-Up Date */}
+            {/* 6. Next Follow-up & Review Box */}
             {followUpDateStr && (
-              <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>
-                Next Visit : <span style={{ color: '#1e40af' }}>{followUpDateStr}</span>
-                {prescription.followUpInstructions && (
-                  <span style={{ fontWeight: '400', color: '#475569', marginLeft: '6px' }}>({prescription.followUpInstructions})</span>
-                )}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                borderRadius: '8px',
+                padding: '8px 14px',
+                marginBottom: '20px',
+                fontSize: '11px'
+              }}>
+                <div>
+                  <span style={{ fontWeight: '800', color: '#1e40af' }}>🗓️ Next Follow-Up Review: </span>
+                  <span style={{ fontWeight: '900', color: '#0f172a', fontSize: '12px' }}>{followUpDateStr}</span>
+                  {prescription.followUpInstructions && (
+                    <span style={{ color: '#475569', marginLeft: '6px' }}>({prescription.followUpInstructions})</span>
+                  )}
+                </div>
+                <span style={{ fontSize: '10px', fontWeight: '700', color: '#2563eb' }}>
+                  Please bring this Rx sheet during follow-up
+                </span>
               </div>
             )}
 
-            {/* Signature Block */}
-            <table style={{ width: '100%', marginTop: '40px' }}>
+            {/* 7. Doctor's Signature Block with Realistic Digital Ink */}
+            <table style={{ width: '100%', marginTop: '24px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
               <tbody>
                 <tr>
-                  <td></td>
-                  <td style={{ width: '200px', textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'Georgia, cursive', fontStyle: 'italic', fontSize: '20px', fontWeight: 'bold', color: '#1e293b', marginBottom: '2px' }}>
-                      Signature
+                  {/* Left: Patient Instructions */}
+                  <td style={{ verticalAlign: 'top', width: '55%', fontSize: '10px', color: '#64748b', lineHeight: '1.5' }}>
+                    <p style={{ margin: 0, fontWeight: '700', color: '#475569' }}>Important Notice:</p>
+                    <p style={{ margin: '2px 0 0' }}>
+                      1. Please complete the full antibiotic course even if symptoms subside.<br />
+                      2. In case of allergic reactions, rash, or breathing difficulty, stop medicine and contact clinic immediately.<br />
+                      3. Substitution allowed with exact generic equivalent if prescribed brand is unavailable.
+                    </p>
+                  </td>
+
+                  {/* Right: Signature & Stamp */}
+                  <td style={{ verticalAlign: 'top', width: '45%', textAlign: 'center', paddingLeft: '20px' }}>
+                    <div style={{
+                      fontFamily: "'Caveat', cursive, 'Brush Script MT', 'Segoe Script'",
+                      fontSize: '32px',
+                      fontWeight: '700',
+                      color: '#1d4ed8',
+                      lineHeight: '1',
+                      marginBottom: '4px',
+                      letterSpacing: '1px',
+                      transform: 'rotate(-2deg)'
+                    }}>
+                      {doctorName.startsWith('Dr.') ? doctorName : `Dr. ${doctorName}`}
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>
-                      {doctorName}
+                    <div style={{ borderTop: '1.5px solid #0f172a', width: '180px', margin: '0 auto 4px auto' }} />
+                    <div style={{ fontSize: '12px', fontWeight: '900', color: '#0f172a' }}>
+                      {doctorName.startsWith('Dr.') ? doctorName : `Dr. ${doctorName}`}
                     </div>
-                    <div style={{ fontSize: '10px', fontWeight: '600', color: '#475569' }}>
+                    <div style={{ fontSize: '10px', fontWeight: '700', color: '#0d9488' }}>
                       {doctorQual}
+                    </div>
+                    <div style={{ fontSize: '9px', color: '#64748b' }}>
+                      Reg. No: {doctorReg} &bull; Authorized Medical Signatory
                     </div>
                   </td>
                 </tr>
               </tbody>
             </table>
+
+            {/* 8. Bottom Legal Footer */}
+            <div style={{
+              marginTop: '20px',
+              paddingTop: '8px',
+              borderTop: '1px dashed #cbd5e1',
+              textAlign: 'center',
+              fontSize: '9px',
+              color: '#94a3b8',
+              lineHeight: '1.4'
+            }}>
+              This is a digital medical prescription issued by a Registered Medical Practitioner under NMC guidelines. &bull; Helpline: {clinicPhone} &bull; Keep Smiling! 😊
+            </div>
 
           </div>
         </div>

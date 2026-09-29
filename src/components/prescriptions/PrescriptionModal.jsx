@@ -38,17 +38,7 @@ export const PrescriptionModal = ({
   initialData = null,
   onSuccess
 }) => {
-  const { user, Patients, Doctors } = useContext(ContextProvider);
-
-  const token = useMemo(() => {
-    if (!user) return null;
-    try {
-      const parsed = typeof user === 'string' ? JSON.parse(user) : user;
-      return parsed?.token || parsed?.data?.token || parsed?.accessToken || parsed?.data?.accessToken || null;
-    } catch {
-      return null;
-    }
-  }, [user]);
+  const { token, Patients, Doctors } = useContext(ContextProvider);
 
   const safePatients = useMemo(() => {
     if (Array.isArray(Patients)) return Patients;

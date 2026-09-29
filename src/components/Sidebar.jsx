@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, CalendarDays, Stethoscope, MessageSquare,
   UsersRound, Pill, Activity, X, Clock, LogOut, ChevronRight,
-  Receipt
+  Receipt, Ticket, Sparkles, Truck
 } from 'lucide-react';
 import { ContextProvider } from '../context/store';
 import { canAccessRoute, ROLE_DETAILS, ROLES } from '../utils/rbac';
@@ -20,6 +20,12 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
       label: userRole === ROLES.PATIENT ? 'My Dashboard' : 'Dashboard', 
       icon: LayoutDashboard, 
       path: '/dashboard' 
+    },
+    { 
+      id: 'queue', 
+      label: userRole === ROLES.PATIENT ? 'Live Queue Status' : 'OPD Queue & Tokens', 
+      icon: Ticket, 
+      path: '/queue' 
     },
     { 
       id: 'patients', 
@@ -55,10 +61,22 @@ const Sidebar = ({ isMobileOpen, onCloseMobile, onLogout }) => {
       path: '/prescriptions' 
     },
     { 
+      id: 'treatments', 
+      label: userRole === ROLES.PATIENT ? 'My Treatment Plans' : 'Treatment Plans & Quotations', 
+      icon: Sparkles, 
+      path: '/treatments' 
+    },
+    { 
       id: 'billing', 
       label: userRole === ROLES.PATIENT ? 'My Invoices' : 'Billing & Invoices', 
       icon: Receipt, 
       path: '/billing' 
+    },
+    { 
+      id: 'lab-tracker', 
+      label: 'Dental Lab Tracker', 
+      icon: Truck, 
+      path: '/lab-tracker' 
     },
     { 
       id: 'enquiries', 
